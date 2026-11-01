@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音声認識ワードカウンター</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts 大量読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Caveat:wght@700&family=Dela+Gothic+One&family=Fredoka:wght@700&family=Hachi+Maru+Pop&family=Inter:wght@700;900&family=Kaisei+Tokumin:wght@700&family=Kiwi+Maru:wght@500;700&family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@700;900&family=Mochiy+Pop+One&family=Montserrat:wght@800;900&family=Noto+Sans+JP:wght@700;900&family=Orbitron:wght@800;900&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@800;900&family=Press+Start+2P&family=Rampart+One&family=Reggae+One&family=Righteous&family=RocknRoll+One&family=Shippori+Mincho:wght@700&family=Teko:wght@700&family=Yuji+Boku&family=Zen+Kurenaido&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* フォント定義 */
+        .font-rounded { font-family: 'M PLUS Rounded 1c', sans-serif; }
+        .font-rocknroll { font-family: 'RocknRoll One', sans-serif; }
+        .font-reggae { font-family: 'Reggae One', cursive; }
+        .font-delagothic { font-family: 'Dela Gothic One', cursive; }
+        .font-mochiy { font-family: 'Mochiy Pop One', sans-serif; }
+        .font-zenmaru { font-family: 'Zen Maru Gothic', sans-serif; }
+        .font-kiwimaru { font-family: 'Kiwi Maru', serif; }
+        .font-rampart { font-family: 'Rampart One', cursive; }
+        .font-hachimaru { font-family: 'Hachi Maru Pop', cursive; }
+        .font-shippori { font-family: 'Shippori Mincho', serif; }
+        .font-zenkurenai { font-family: 'Zen Kurenaido', sans-serif; }
+        .font-yujiboku { font-family: 'Yuji Boku', cursive; }
+        .font-kosugimaru { font-family: 'Kosugi Maru', sans-serif; }
+        .font-kaisei { font-family: 'Kaisei Tokumin', serif; }
+        .font-noto { font-family: 'Noto Sans JP', sans-serif; }
+        
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-bungee { font-family: 'Bungee', cursive; }
+        .font-fredoka { font-family: 'Fredoka', sans-serif; }
+        .font-anton { font-family: 'Anton', sans-serif; }
+        .font-righteous { font-family: 'Righteous', cursive; }
+        .font-marker { font-family: 'Permanent Marker', cursive; }
+        .font-caveat { font-family: 'Caveat', cursive; }
+        .font-pacifico { font-family: 'Pacifico', cursive; }
+        .font-pixel { font-family: 'Press Start 2P', cursive; }
+        .font-teko { font-family: 'Teko', sans-serif; }
+        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+
+        /* 録音点滅アニメーション */
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.25); opacity: 0.6; }
+        }
+        .recording-dot { animation: pulse-red 1.2s infinite ease-in-out; }
+
+        /* ポップアップ跳ね上がりエフェクト */
+        @keyframes popup-float {
+            0% { opacity: 0; transform: translateY(15px) scale(0.4) rotate(-8deg); }
+            35% { opacity: 1; transform: translateY(-30px) scale(1.25) rotate(4deg); }
+            70% { opacity: 1; transform: translateY(-50px) scale(1) rotate(0deg); }
+            100% { opacity: 0; transform: translateY(-75px) scale(0.85); }
+        }
+        .pop-effect {
+            animation: popup-float 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            pointer-events: none;
+            position: absolute;
+            white-space: nowrap;
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        /* チェッカー背景 */
+        .checker-bg {
+            background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                              linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                              linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #0f172a;
+        }
+
+        /* ドラッグ可能レイヤー */
+        .draggable-layer {
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+        }
+        .draggable-layer.active-drag {
+            outline: 2px dashed #6366f1;
+            outline-offset: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-noto selection:bg-indigo-500 selection:text-white">
+
+    <!-- ナビゲーションバー -->
+    <header id="app-header" class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap justify-between items-center gap-4 sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20 text-white">
+                <i class="fa-solid fa-microphone-lines text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-black tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">音声ワードカウンター</h1>
+                <p class="text-xs text-slate-400">リアルタイム音声認識オーバーレイ作成ツール</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- ホームへ戻るボタン -->
+            <button id="nav-btn-home" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-sm flex items-center gap-2 transition-all shadow-md">
+                <i class="fa-solid fa-house"></i> ホーム一覧
+            </button>
+            
+            <div id="editor-header-tools" class="hidden flex items-center gap-2">
+                <div class="h-6 w-px bg-slate-800 mx-1"></div>
+
+                <button id="btn-toggle-mic" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm flex items-center gap-2 transition-all shadow-md shadow-emerald-900/30">
+                    <i class="fa-solid fa-microphone"></i>
+                    <span id="mic-status-text">マイク開始</span>
+                </button>
+                <button id="btn-share" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-share-nodes"></i> 共有
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 1. ホーム画面 (プロジェクト一覧) -->
+    <section id="view-home" class="flex-1 p-6 lg:p-10 max-w-6xl mx-auto w-full">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="text-2xl font-extrabold text-white">マイ・カウンター作品</h2>
+                <p class="text-sm text-slate-400">作成したカウンター設定の一覧・編集を行えます</p>
+            </div>
+            <button id="btn-create-project" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-105">
+                <i class="fa-solid fa-plus text-lg"></i> 新しいカウンターを作成
+            </button>
+        </div>
+
+        <!-- プロジェクトカードグリッド -->
+        <div id="project-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+        <!-- プロジェクトが空の表示 -->
+        <div id="empty-state" class="hidden text-center py-16 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-8">
+            <div class="w-16 h-16 bg-slate-800 text-slate-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-300 mb-1">カウンターがありません</h3>
+            <p class="text-xs text-slate-500 mb-4">右上の「+ 新しいカウンターを作成」ボタンから追加してください。</p>
+        </div>
+    </section>
+
+    <!-- 2. エディタ画面 -->
+    <main id="view-editor" class="flex-1 flex flex-col lg:flex-row overflow-hidden hidden">
+        
+        <!-- プレビューエリア -->
+        <section id="preview-section" class="w-full lg:w-3/5 p-4 lg:p-8 flex flex-col items-center justify-center checker-bg relative min-h-[440px] select-none">
+            
+            <!-- ステータスバー -->
+            <div id="status-bar" class="w-full max-w-2xl mb-4 flex items-center justify-between text-xs bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-2.5 backdrop-blur shadow-lg">
+                <div class="flex items-center gap-2.5">
+                    <span id="mic-indicator-dot" class="w-3 h-3 rounded-full bg-gray-500 inline-block"></span>
+                    <span id="transcript-display" class="text-slate-300 italic truncate max-w-[220px] sm:max-w-md">音声認識は停止中</span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-400">
+                    <span>検知ワード: <strong id="target-words-badge" class="text-indigo-400 font-bold">なし</strong></span>
+                </div>
+            </div>
+
+            <!-- カウンターカード本体 -->
+            <div id="overlay-card" class="w-full max-w-2xl min-h-[160px] transition-all shadow-2xl relative flex flex-col items-center justify-center p-6 border-4 overflow-hidden"
+                 style="background-color: #1e293b; border-color: #64748b; border-radius: 20px;">
+                
+                <!-- ポップアップ表示エリア -->
+                <div id="popup-container" class="absolute inset-x-0 top-2 flex justify-center pointer-events-none z-40"></div>
+
+                <!-- 中央コンテンツ (数字 + メーター) -->
+                <div class="flex-1 flex flex-col justify-center items-center w-full z-10 pointer-events-none">
+                    <div class="flex items-center justify-center gap-3 mb-1">
+                        <!-- 赤い録音中インジケーター -->
+                        <span id="card-rec-dot" class="w-4 h-4 rounded-full bg-red-600 recording-dot inline-block shadow-lg shadow-red-600/50"></span>
+                        
+                        <!-- カウント数値 -->
+                        <div id="count-display" class="font-rounded font-extrabold text-5xl sm:text-7xl text-white tracking-wider transition-all">
+                            0
+                        </div>
+                    </div>
+
+                    <!-- メーター -->
+                    <div id="meter-container" class="w-full max-w-md mt-2 flex items-center gap-3">
+                        <div class="flex-1 bg-slate-950/70 rounded-full h-4 sm:h-5 p-0.5 border border-slate-700/60 overflow-hidden relative shadow-inner">
+                            <div id="meter-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                        
+                        <div class="flex items-center gap-1 min-w-[70px] justify-end font-bold text-xs sm:text-sm text-slate-200">
+                            <span id="meter-icon" class="text-amber-400">🤌</span>
+                            <span id="meter-percent">0.0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- カスタムレイヤー（テキスト・画像）描画用コンテナ -->
+                <div id="custom-layers-container" class="absolute inset-0 z-20 pointer-events-none"></div>
+
+            </div>
+
+            <!-- 手動操作ボタン -->
+            <div id="manual-controls" class="mt-6 flex items-center gap-3">
+                <button id="btn-dec" class="w-12 h-12 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-xl border border-slate-700 flex items-center justify-center active:scale-95 transition-all">
+                    -1
+                </button>
+                <button id="btn-inc" class="px-6 h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-indigo-900/40">
+                    <i class="fa-solid fa-plus"></i> カウント増
+                </button>
+                <button id="btn-reset" class="w-12 h-12 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 rounded-xl font-bold border border-slate-700 flex items-center justify-center active:scale-95 transition-all" title="リセット">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- 設定パネル -->
+        <section id="control-panel" class="w-full lg:w-2/5 bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-800 p-4 lg:p-6 overflow-y-auto space-y-6">
+            
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-sm font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> 設定カスタマイズ
+                </h2>
+                <input type="text" id="cfg-project-name" class="bg-slate-950 border border-slate-700 rounded px-2.5 py-1 text-xs text-right text-slate-200 font-bold w-44 focus:outline-none focus:border-indigo-500" value="無題のプロジェクト">
+            </div>
+
+            <!-- 1. 音声・カウント設定 -->
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-bullhorn text-indigo-400"></i> 音声検知 & カウント
+                </h3>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">対象ワード (カンマ区切り)</label>
+                    <input type="text" id="cfg-target-words" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" value="にゃー, かわいい, すごい">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">現在のカウント</label>
+                        <input type="number" id="cfg-current-count" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none" value="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">目標カウント</label>
+                        <input type="number" id="cfg-target-goal" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none" value="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. ポップアップ文字エフェクト -->
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> カウント上昇エフェクト（複数登録）
+                    </h3>
+                    <button id="btn-add-pop-effect" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-xs font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> エフェクト追加
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-400">単語検知時に登録したエフェクトからランダムに表示されます。</p>
+
+                <div id="pop-effects-list" class="space-y-2"></div>
+            </div>
+
+            <!-- 3. カウント数字スタイル & カスタムグラデーション -->
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-font text-emerald-400"></i> 数字フォント & カラー設定
+                </h3>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">フォント選択（スタイル反映）</label>
+                        <select id="cfg-font-family" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">カラーモード</label>
+                        <select id="cfg-color-mode" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+                            <option value="solid">単色 (Solid)</option>
+                            <option value="custom-grad">カスタムグラデーション</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 単色設定 -->
+                <div id="panel-solid-color" class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">文字色</label>
+                        <input type="color" id="cfg-text-color" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#ffffff">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">ドロップシャドウ色</label>
+                        <input type="color" id="cfg-shadow-color" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#000000">
+                    </div>
+                </div>
+
+                <!-- カスタムグラデーション設定 -->
+                <div id="panel-custom-grad" class="hidden space-y-2 p-2.5 bg-slate-950/60 rounded-lg border border-slate-700/50">
+                    <span class="text-xs font-bold text-indigo-300">グラデーション作成</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400">開始色</label>
+                            <input type="color" id="cfg-grad-color1" class="w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="#38bdf8">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400">終了色</label>
+                            <input type="color" id="cfg-grad-color2" class="w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="#c084fc">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400">角度 (<span id="grad-deg-val">90</span>°)</label>
+                            <input type="range" id="cfg-grad-deg" min="0" max="360" value="90" class="w-full accent-indigo-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 自由ドラッグ可能カスタムレイヤー（一本化） -->
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+                        <i class="fa-solid fa-layer-group text-pink-400"></i> カスタムレイヤー (イラスト・絵文字・テキスト)
+                    </h3>
+                    <div class="flex gap-2">
+                        <button id="btn-add-text-layer" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-font"></i> テキスト追加
+                        </button>
+                        <button id="btn-add-img-layer" class="px-2 py-1 bg-pink-600 hover:bg-pink-500 text-white rounded text-xs font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-image"></i> 画像追加
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-[11px] text-slate-400">カウンター上のレイヤーは直接マウス/タッチでドラッグして好きな場所に移動できます。</p>
+
+                <div id="layers-list" class="space-y-3"></div>
+            </div>
+
+            <!-- 5. 背景 & 枠線 -->
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-palette text-yellow-400"></i> カード枠・背景
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">背景色</label>
+                        <input type="color" id="cfg-card-bg" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#1e293b">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">枠線の色</label>
+                        <input type="color" id="cfg-border-color" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#64748b">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">枠線幅 (px)</label>
+                        <input type="range" id="cfg-border-width" min="0" max="10" value="4" class="w-full accent-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">角丸 (px)</label>
+                        <input type="range" id="cfg-border-radius" min="0" max="40" value="20" class="w-full accent-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- トースト通知 -->
+    <div id="toast-message" class="fixed bottom-5 right-5 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 flex items-center gap-2 z-50 text-sm">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-text">保存しました</span>
+    </div>
+
+    <!-- JavaScript ロジック -->
+    <script>
+        const FONT_OPTIONS = [
+            { id: "font-rounded", name: "M PLUS Rounded (丸ゴシック)", class: "font-rounded" },
+            { id: "font-rocknroll", name: "RocknRoll One (ポップ)", class: "font-rocknroll" },
+            { id: "font-reggae", name: "Reggae One (太字インパクト)", class: "font-reggae" },
+            { id: "font-delagothic", name: "Dela Gothic One (超極太)", class: "font-delagothic" },
+            { id: "font-mochiy", name: "Mochiy Pop One (もちポップ)", class: "font-mochiy" },
+            { id: "font-zenmaru", name: "Zen 丸ゴシック", class: "font-zenmaru" },
+            { id: "font-kiwimaru", name: "Kiwi Maru (明朝手書き風)", class: "font-kiwimaru" },
+            { id: "font-rampart", name: "Rampart One (立体影付)", class: "font-rampart" },
+            { id: "font-hachimaru", name: "Hachi Maru Pop (レトロ手書き)", class: "font-hachimaru" },
+            { id: "font-shippori", name: "しっぽり明朝", class: "font-shippori" },
+            { id: "font-zenkurenai", name: "Zen 紅道 (手書き)", class: "font-zenkurenai" },
+            { id: "font-yujiboku", name: "Yuji Boku (毛筆風)", class: "font-yujiboku" },
+            { id: "font-kosugimaru", name: "小杉丸ゴシック", class: "font-kosugimaru" },
+            { id: "font-kaisei", name: "Kaisei Tokumin (和風明朝)", class: "font-kaisei" },
+            { id: "font-noto", name: "Noto Sans (標準ゴシック)", class: "font-noto" },
+            { id: "font-orbitron", name: "Orbitron (SF/近未来)", class: "font-orbitron" },
+            { id: "font-bungee", name: "Bungee (縦型太字)", class: "font-bungee" },
+            { id: "font-fredoka", name: "Fredoka (まるかわ英語)", class: "font-fredoka" },
+            { id: "font-anton", name: "Anton (縦長インパクト)", class: "font-anton" },
+            { id: "font-righteous", name: "Righteous (モダンレトロ)", class: "font-righteous" },
+            { id: "font-marker", name: "Permanent Marker (マーカー)", class: "font-marker" },
+            { id: "font-caveat", name: "Caveat (オシャレ筆記体)", class: "font-caveat" },
+            { id: "font-pacifico", name: "Pacifico (カリグラフィ)", class: "font-pacifico" },
+            { id: "font-pixel", name: "Press Start 2P (ドット絵)", class: "font-pixel" },
+            { id: "font-teko", name: "Teko (縦長スリム)", class: "font-teko" },
+            { id: "font-montserrat", name: "Montserrat (スタイリッシュ)", class: "font-montserrat" },
+            { id: "font-poppins", name: "Poppins (幾何学ゴシック)", class: "font-poppins" }
+        ];
+
+        const createDefaultProject = (id, name = "新規カウンター") => ({
+            id: id || Date.now().toString(),
+            name: name,
+            updatedAt: new Date().toISOString(),
+            count: 0,
+            goal: 100,
+            targetWords: ["にゃー", "かわいい", "すごい"],
+            popEffects: [
+                { id: "p1", text: "+1 しゃべった！", mode: "solid", color: "#f59e0b", grad1: "#fbbf24", grad2: "#ef4444", deg: 90, font: "font-rocknroll" },
+                { id: "p2", text: "GREAT!", mode: "grad", color: "#10b981", grad1: "#34d399", grad2: "#3b82f6", deg: 90, font: "font-bungee" }
+            ],
+            fontFamily: "font-rounded",
+            colorMode: "solid",
+            textColor: "#ffffff",
+            shadowColor: "#000000",
+            gradColor1: "#38bdf8",
+            gradColor2: "#c084fc",
+            gradDeg: 90,
+            meterIcon: "🤌",
+            cardBg: "#1e293b",
+            borderColor: "#64748b",
+            borderWidth: 4,
+            borderRadius: 20,
+            layers: [
+                { id: "l1", type: "text", content: "🐱", x: 8, y: 30, size: 45, font: "font-rounded", colorMode: "solid", color: "#ffffff", opacity: 100, rotate: 0, zIndex: 20 },
+                { id: "l2", type: "text", content: "🕺", x: 82, y: 32, size: 40, font: "font-rounded", colorMode: "solid", color: "#ffffff", opacity: 100, rotate: 0, zIndex: 20 }
+            ]
+        });
+
+        let projects = [];
+        let currentProjectId = null;
+        let activeProject = null;
+        let isListening = false;
+        let recognition = null;
+
+        let draggingLayerIdx = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            populateFontSelects();
+            loadProjectsFromStorage();
+            setupSpeechRecognition();
+            bindEvents();
+            setupGlobalDragEvents();
+
+            if (window.location.hash.length > 1) {
+                try {
+                    const jsonStr = decodeURIComponent(atob(window.location.hash.substring(1)));
+                    const importedProj = JSON.parse(jsonStr);
+                    importedProj.id = Date.now().toString();
+                    projects.push(importedProj);
+                    saveProjectsToStorage();
+                    switchProject(importedProj.id);
+                    switchView('editor');
+                    return;
+                } catch (e) {
+                    console.warn("URL Parse error:", e);
+                }
+            }
+
+            switchView('home');
+            renderProjectGrid();
+        });
+
+        function populateFontSelects() {
+            const fontSel = document.getElementById('cfg-font-family');
+            fontSel.innerHTML = '';
+            FONT_OPTIONS.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.class;
+                opt.innerText = f.name;
+                opt.className = f.class;
+                opt.style.fontFamily = getComputedStyleFont(f.class);
+                fontSel.appendChild(opt);
+            });
+        }
+
+        function getComputedStyleFont(fontClass) {
+            const dummy = document.createElement('span');
+            dummy.className = fontClass;
+            document.body.appendChild(dummy);
+            const family = window.getComputedStyle(dummy).fontFamily;
+            document.body.removeChild(dummy);
+            return family;
+        }
+
+        function loadProjectsFromStorage() {
+            const saved = localStorage.getItem('sariblocks_counter_projects_v2');
+            if (saved) {
+                try { projects = JSON.parse(saved); } catch (e) { projects = []; }
+            }
+        }
+
+        function saveProjectsToStorage() {
+            if (activeProject) {
+                activeProject.updatedAt = new Date().toISOString();
+            }
+            localStorage.setItem('sariblocks_counter_projects_v2', JSON.stringify(projects));
+        }
+
+        function switchProject(id) {
+            currentProjectId = id;
+            activeProject = projects.find(p => p.id === id);
+            if (!activeProject) return;
+            syncFormFromState();
+            updateEditorUI();
+            renderLayersControlList();
+        }
+
+        function switchView(viewName) {
+            const homeSec = document.getElementById('view-home');
+            const editorSec = document.getElementById('view-editor');
+            const editorTools = document.getElementById('editor-header-tools');
+
+            if (viewName === 'home') {
+                homeSec.classList.remove('hidden');
+                editorSec.classList.add('hidden');
+                editorTools.classList.add('hidden');
+                renderProjectGrid();
+            } else {
+                if (!activeProject && projects.length > 0) switchProject(projects[0].id);
+                homeSec.classList.add('hidden');
+                editorSec.classList.remove('hidden');
+                editorTools.classList.remove('hidden');
+            }
+        }
+
+        function renderProjectGrid() {
+            const grid = document.getElementById('project-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            if (projects.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            projects.forEach(p => {
+                const dateStr = new Date(p.updatedAt).toLocaleString('ja-JP', {
+                    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-5 relative flex flex-col justify-between transition-all hover:shadow-xl group";
+                card.innerHTML = `
+                    <button class="btn-delete-project absolute top-3 right-3 w-8 h-8 rounded-lg bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white flex items-center justify-center transition-all z-10" data-id="${p.id}" title="作品を削除">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-900/60 border border-indigo-700/50 flex items-center justify-center text-indigo-300 font-extrabold">
+                                ${p.count}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-white group-hover:text-indigo-400 transition-colors">${escapeHtml(p.name)}</h3>
+                                <p class="text-xs text-slate-500">最終保存: ${dateStr}</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-400 bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 mb-4">
+                            検知ワード: <span class="text-slate-200 font-semibold">${p.targetWords && p.targetWords.length > 0 ? p.targetWords.join(', ') : '未設定'}</span>
+                        </div>
+                    </div>
+                    <button class="btn-open-project w-full py-2.5 bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2" data-id="${p.id}">
+                        <i class="fa-solid fa-pen"></i> このカウンターを編集
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+
+            grid.querySelectorAll('.btn-open-project').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    switchProject(id);
+                    switchView('editor');
+                });
+            });
+
+            grid.querySelectorAll('.btn-delete-project').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = e.currentTarget.getAttribute('data-id');
+                    projects = projects.filter(p => p.id !== id);
+                    saveProjectsToStorage();
+                    renderProjectGrid();
+                    showToast('作品を削除しました');
+                });
+            });
+        }
+
+        function setupSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'ja-JP';
+
+            recognition.onstart = () => { isListening = true; updateMicUI(); };
+            recognition.onend = () => {
+                if (isListening) { try { recognition.start(); } catch(e) { isListening = false; updateMicUI(); } }
+                else updateMicUI();
+            };
+            recognition.onresult = (event) => {
+                let interim = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        checkKeywords(event.results[i][0].transcript);
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                document.getElementById('transcript-display').innerText = interim || "（聞き取り中...）";
+            };
+        }
+
+        function checkKeywords(text) {
+            if (!activeProject || !activeProject.targetWords) return;
+            let hits = 0;
+            activeProject.targetWords.forEach(w => {
+                if (!w) return;
+                const matches = text.match(new RegExp(escapeRegExp(w), 'gi'));
+                if (matches) hits += matches.length;
+            });
+
+            if (hits > 0) {
+                activeProject.count += hits;
+                document.getElementById('cfg-current-count').value = activeProject.count;
+                triggerPopupEffect();
+                updateEditorUI();
+                saveProjectsToStorage();
+            }
+        }
+
+        function triggerPopupEffect() {
+            const container = document.getElementById('popup-container');
+            if (!container || !activeProject || !activeProject.popEffects || activeProject.popEffects.length === 0) return;
+
+            const effect = activeProject.popEffects[Math.floor(Math.random() * activeProject.popEffects.length)];
+
+            const popEl = document.createElement('div');
+            popEl.className = `pop-effect text-xl sm:text-3xl font-black ${effect.font || 'font-rounded'}`;
+            popEl.innerText = effect.text || '+1';
+
+            if (effect.mode === 'grad') {
+                popEl.style.color = 'transparent';
+                popEl.style.webkitBackgroundClip = 'text';
+                popEl.style.backgroundImage = `linear-gradient(${effect.deg || 90}deg, ${effect.grad1}, ${effect.grad2})`;
+                popEl.style.filter = 'drop-shadow(2px 4px 6px rgba(0,0,0,0.6))';
+            } else {
+                popEl.style.color = effect.color || '#f59e0b';
+                popEl.style.textShadow = '2px 4px 8px rgba(0,0,0,0.7)';
+            }
+
+            container.appendChild(popEl);
+            setTimeout(() => popEl.remove(), 900);
+        }
+
+        function updateEditorUI() {
+            if (!activeProject) return;
+
+            document.getElementById('count-display').innerText = Number(activeProject.count).toLocaleString();
+            const pct = activeProject.goal > 0 ? Math.min(100, Math.max(0, (activeProject.count / activeProject.goal) * 100)) : 0;
+            document.getElementById('meter-bar').style.width = `${pct}%`;
+            document.getElementById('meter-percent').innerText = `${pct.toFixed(1)}%`;
+            document.getElementById('target-words-badge').innerText = activeProject.targetWords.join(', ') || 'なし';
+
+            const countDisp = document.getElementById('count-display');
+            countDisp.className = `font-extrabold text-5xl sm:text-7xl tracking-wider transition-all ${activeProject.fontFamily}`;
+
+            if (activeProject.colorMode === 'solid') {
+                countDisp.style.background = 'none';
+                countDisp.style.webkitBackgroundClip = 'initial';
+                countDisp.style.color = activeProject.textColor;
+                countDisp.style.textShadow = `2px 4px 8px ${activeProject.shadowColor}`;
+            } else {
+                countDisp.style.color = 'transparent';
+                countDisp.style.webkitBackgroundClip = 'text';
+                countDisp.style.textShadow = 'none';
+                countDisp.style.backgroundImage = `linear-gradient(${activeProject.gradDeg}deg, ${activeProject.gradColor1}, ${activeProject.gradColor2})`;
+            }
+
+            const card = document.getElementById('overlay-card');
+            card.style.backgroundColor = activeProject.cardBg;
+            card.style.borderColor = activeProject.borderColor;
+            card.style.borderWidth = `${activeProject.borderWidth}px`;
+            card.style.borderRadius = `${activeProject.borderRadius}px`;
+
+            renderPopEffectsList();
+            renderCustomLayersCanvas();
+        }
+
+        function renderPopEffectsList() {
+            const container = document.getElementById('pop-effects-list');
+            container.innerHTML = '';
+            if (!activeProject.popEffects) activeProject.popEffects = [];
+
+            activeProject.popEffects.forEach((eff, idx) => {
+                const item = document.createElement('div');
+                item.className = 'p-3 bg-slate-950/80 rounded-xl border border-slate-700/60 space-y-2 text-xs';
+                
+                let fontOptionsHtml = '';
+                FONT_OPTIONS.forEach(f => {
+                    fontOptionsHtml += `<option value="${f.class}" ${eff.font === f.class ? 'selected' : ''} style="font-family:${getComputedStyleFont(f.class)}">${f.name}</option>`;
+                });
+
+                item.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-amber-300">エフェクト #${idx + 1}</span>
+                        <button class="btn-del-pop text-red-400 hover:text-red-300" data-idx="${idx}"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-0.5">表示テキスト</label>
+                            <input type="text" class="inp-pop-text w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" value="${escapeHtml(eff.text)}" data-idx="${idx}">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-0.5">フォント</label>
+                            <select class="sel-pop-font w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" data-idx="${idx}">
+                                ${fontOptionsHtml}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-0.5">配色モード</label>
+                            <select class="sel-pop-mode w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" data-idx="${idx}">
+                                <option value="solid" ${eff.mode === 'solid' ? 'selected' : ''}>単色</option>
+                                <option value="grad" ${eff.mode === 'grad' ? 'selected' : ''}>グラデーション</option>
+                            </select>
+                        </div>
+                        ${eff.mode === 'solid' ? `
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-0.5">文字色</label>
+                                <input type="color" class="inp-pop-color w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="${eff.color || '#f59e0b'}" data-idx="${idx}">
+                            </div>
+                        ` : `
+                            <div class="flex gap-1">
+                                <div class="flex-1"><label class="block text-[9px] text-slate-400">開始色</label><input type="color" class="inp-pop-g1 w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="${eff.grad1 || '#fbbf24'}" data-idx="${idx}"></div>
+                                <div class="flex-1"><label class="block text-[9px] text-slate-400">終了色</label><input type="color" class="inp-pop-g2 w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="${eff.grad2 || '#ef4444'}" data-idx="${idx}"></div>
+                            </div>
+                        `}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+
+            container.querySelectorAll('.inp-pop-text').forEach(el => {
+                el.addEventListener('input', e => {
+                    activeProject.popEffects[e.target.dataset.idx].text = e.target.value;
+                    saveProjectsToStorage();
+                });
+            });
+            container.querySelectorAll('.sel-pop-font').forEach(el => {
+                el.addEventListener('change', e => {
+                    activeProject.popEffects[e.target.dataset.idx].font = e.target.value;
+                    saveProjectsToStorage();
+                });
+            });
+            container.querySelectorAll('.sel-pop-mode').forEach(el => {
+                el.addEventListener('change', e => {
+                    activeProject.popEffects[e.target.dataset.idx].mode = e.target.value;
+                    renderPopEffectsList();
+                    saveProjectsToStorage();
+                });
+            });
+            container.querySelectorAll('.inp-pop-color').forEach(el => {
+                el.addEventListener('input', e => {
+                    activeProject.popEffects[e.target.dataset.idx].color = e.target.value;
+                    saveProjectsToStorage();
+                });
+            });
+            container.querySelectorAll('.inp-pop-g1').forEach(el => {
+                el.addEventListener('input', e => {
+                    activeProject.popEffects[e.target.dataset.idx].grad1 = e.target.value;
+                    saveProjectsToStorage();
+                });
+            });
+            container.querySelectorAll('.inp-pop-g2').forEach(el => {
+                el.addEventListener('input', e => {
+                    activeProject.popEffects[e.target.dataset.idx].grad2 = e.target.value;
+                    saveProjectsToStorage();
+                });
+            });
+            container.querySelectorAll('.btn-del-pop').forEach(el => {
+                el.addEventListener('click', e => {
+                    activeProject.popEffects.splice(e.currentTarget.dataset.idx, 1);
+                    renderPopEffectsList();
+                    saveProjectsToStorage();
+                });
+            });
+        }
+
+        // キャンバス上のレイヤー描画（入力中フォーカス維持のため描画を分離）
+        function renderCustomLayersCanvas() {
+            const container = document.getElementById('custom-layers-container');
+            container.innerHTML = '';
+            if (!activeProject || !activeProject.layers) return;
+
+            activeProject.layers.forEach((layer, idx) => {
+                const layerEl = document.createElement('div');
+                layerEl.className = `draggable-layer absolute font-bold pointer-events-auto ${layer.font || 'font-rounded'} ${idx === draggingLayerIdx ? 'active-drag' : ''}`;
+                layerEl.id = `canvas-layer-${idx}`;
+                layerEl.dataset.idx = idx;
+                layerEl.style.left = `${layer.x}%`;
+                layerEl.style.top = `${layer.y}%`;
+                layerEl.style.opacity = `${(layer.opacity ?? 100) / 100}`;
+                layerEl.style.transform = `rotate(${layer.rotate || 0}deg)`;
+                layerEl.style.zIndex = layer.zIndex || 20;
+
+                if (layer.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = layer.content || 'https://placehold.co/50x50/334155/ffffff?text=Icon';
+                    img.style.height = `${layer.size || 40}px`;
+                    img.style.pointerEvents = 'none';
+                    layerEl.appendChild(img);
+                } else {
+                    layerEl.style.fontSize = `${layer.size || 20}px`;
+                    if (layer.colorMode === 'grad') {
+                        layerEl.style.color = 'transparent';
+                        layerEl.style.webkitBackgroundClip = 'text';
+                        layerEl.style.backgroundImage = `linear-gradient(${layer.gradDeg || 90}deg, ${layer.grad1 || '#38bdf8'}, ${layer.grad2 || '#c084fc'})`;
+                    } else {
+                        layerEl.style.color = layer.color || '#ffffff';
+                        if (layer.shadow) {
+                            layerEl.style.textShadow = `2px 3px 6px ${layer.shadowColor || '#000000'}`;
+                        }
+                    }
+                    layerEl.innerText = layer.content || 'テキスト';
+                }
+
+                layerEl.addEventListener('mousedown', (e) => startDrag(e, idx));
+                layerEl.addEventListener('touchstart', (e) => startDrag(e, idx), { passive: false });
+
+                container.appendChild(layerEl);
+            });
+        }
+
+        // カスタムレイヤー設定コントロール一覧のレンダリング（全体再描画せず個別に値を更新）
+        function renderLayersControlList() {
+            const listContainer = document.getElementById('layers-list');
+            listContainer.innerHTML = '';
+            if (!activeProject || !activeProject.layers) return;
+
+            activeProject.layers.forEach((layer, idx) => {
+                const item = document.createElement('div');
+                item.className = 'p-3 bg-slate-950/80 rounded-xl border border-slate-700/60 space-y-2 text-xs';
+                
+                let fontOptionsHtml = '';
+                FONT_OPTIONS.forEach(f => {
+                    fontOptionsHtml += `<option value="${f.class}" ${layer.font === f.class ? 'selected' : ''} style="font-family:${getComputedStyleFont(f.class)}">${f.name}</option>`;
+                });
+
+                item.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-pink-300">レイヤー #${idx + 1} (${layer.type === 'image' ? '画像' : 'テキスト'})</span>
+                        <button class="btn-del-layer text-red-400 hover:text-red-300" data-idx="${idx}"><i class="fa-solid fa-trash"></i> 削除</button>
+                    </div>
+
+                    ${layer.type === 'image' ? `
+                        <div class="space-y-1">
+                            <label class="block text-[10px] text-slate-400">画像URL</label>
+                            <input type="text" class="inp-layer-content w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" value="${escapeHtml(layer.content)}" data-idx="${idx}">
+                            <input type="file" class="inp-layer-file text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-slate-800 file:text-slate-300" data-idx="${idx}">
+                        </div>
+                    ` : `
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-slate-400">テキスト</label>
+                                <input type="text" class="inp-layer-content w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" value="${escapeHtml(layer.content)}" data-idx="${idx}">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400">フォント</label>
+                                <select class="sel-layer-font w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" data-idx="${idx}">
+                                    ${fontOptionsHtml}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-slate-400">カラーモード</label>
+                                <select class="sel-layer-colormode w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" data-idx="${idx}">
+                                    <option value="solid" ${layer.colorMode === 'solid' ? 'selected' : ''}>単色</option>
+                                    <option value="grad" ${layer.colorMode === 'grad' ? 'selected' : ''}>グラデーション</option>
+                                </select>
+                            </div>
+                            ${layer.colorMode === 'solid' ? `
+                                <div>
+                                    <label class="block text-[10px] text-slate-400">文字色</label>
+                                    <input type="color" class="inp-layer-color w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="${layer.color || '#ffffff'}" data-idx="${idx}">
+                                </div>
+                            ` : `
+                                <div class="flex gap-1">
+                                    <div class="flex-1"><label class="block text-[9px] text-slate-400">色1</label><input type="color" class="inp-layer-g1 w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="${layer.grad1 || '#38bdf8'}" data-idx="${idx}"></div>
+                                    <div class="flex-1"><label class="block text-[9px] text-slate-400">色2</label><input type="color" class="inp-layer-g2 w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="${layer.grad2 || '#c084fc'}" data-idx="${idx}"></div>
+                                </div>
+                            `}
+                        </div>
+                    `}
+
+                    <div class="grid grid-cols-4 gap-1.5 pt-1">
+                        <div><label class="text-[9px] text-slate-400">サイズ(${layer.size}px)</label><input type="range" class="inp-layer-size w-full accent-indigo-500" min="10" max="150" value="${layer.size}" data-idx="${idx}"></div>
+                        <div><label class="text-[9px] text-slate-400">回転(${layer.rotate || 0}°)</label><input type="range" class="inp-layer-rotate w-full accent-indigo-500" min="0" max="360" value="${layer.rotate || 0}" data-idx="${idx}"></div>
+                        <div><label class="text-[9px] text-slate-400">透明度(${layer.opacity ?? 100}%)</label><input type="range" class="inp-layer-opacity w-full accent-indigo-500" min="10" max="100" value="${layer.opacity ?? 100}" data-idx="${idx}"></div>
+                        <div><label class="text-[9px] text-slate-400">重ね順(z)</label><input type="number" class="inp-layer-z w-full bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-center text-white" value="${layer.zIndex || 20}" data-idx="${idx}"></div>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            // 1文字ごとのフォーカス脱落を防止するため、描画全体のリセットを回避しピンポイント更新
+            listContainer.querySelectorAll('.inp-layer-content').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].content = e.target.value;
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-file').forEach(el => {
+                el.addEventListener('change', e => {
+                    const idx = e.target.dataset.idx;
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (evt) => {
+                            activeProject.layers[idx].content = evt.target.result;
+                            renderCustomLayersCanvas();
+                            saveProjectsToStorage();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            });
+            listContainer.querySelectorAll('.sel-layer-font').forEach(el => {
+                el.addEventListener('change', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].font = e.target.value;
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.sel-layer-colormode').forEach(el => {
+                el.addEventListener('change', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].colorMode = e.target.value;
+                    renderLayersControlList();
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-color').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].color = e.target.value;
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-g1').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].grad1 = e.target.value;
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-g2').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].grad2 = e.target.value;
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-size').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].size = parseInt(e.target.value);
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-rotate').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].rotate = parseInt(e.target.value);
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-opacity').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].opacity = parseInt(e.target.value);
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.inp-layer-z').forEach(el => {
+                el.addEventListener('input', e => {
+                    const idx = e.target.dataset.idx;
+                    activeProject.layers[idx].zIndex = parseInt(e.target.value) || 1;
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+            listContainer.querySelectorAll('.btn-del-layer').forEach(el => {
+                el.addEventListener('click', e => {
+                    const idx = e.currentTarget.dataset.idx;
+                    activeProject.layers.splice(idx, 1);
+                    renderLayersControlList();
+                    renderCustomLayersCanvas();
+                    saveProjectsToStorage();
+                });
+            });
+        }
+
+        function startDrag(e, idx) {
+            e.preventDefault();
+            draggingLayerIdx = idx;
+            const card = document.getElementById('overlay-card');
+            const rect = card.getBoundingClientRect();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const currentXPercent = activeProject.layers[idx].x;
+            const currentYPercent = activeProject.layers[idx].y;
+
+            dragOffsetX = ((clientX - rect.left) / rect.width * 100) - currentXPercent;
+            dragOffsetY = ((clientY - rect.top) / rect.height * 100) - currentYPercent;
+
+            renderCustomLayersCanvas();
+        }
+
+        function setupGlobalDragEvents() {
+            const onMove = (e) => {
+                if (draggingLayerIdx === null || !activeProject) return;
+                const card = document.getElementById('overlay-card');
+                const rect = card.getBoundingClientRect();
+
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                let newX = ((clientX - rect.left) / rect.width * 100) - dragOffsetX;
+                let newY = ((clientY - rect.top) / rect.height * 100) - dragOffsetY;
+
+                newX = Math.max(-5, Math.min(95, newX));
+                newY = Math.max(-5, Math.min(95, newY));
+
+                activeProject.layers[draggingLayerIdx].x = Math.round(newX);
+                activeProject.layers[draggingLayerIdx].y = Math.round(newY);
+
+                const layerEl = document.getElementById(`canvas-layer-${draggingLayerIdx}`);
+                if (layerEl) {
+                    layerEl.style.left = `${activeProject.layers[draggingLayerIdx].x}%`;
+                    layerEl.style.top = `${activeProject.layers[draggingLayerIdx].y}%`;
+                }
+            };
+
+            const onEnd = () => {
+                if (draggingLayerIdx !== null) {
+                    draggingLayerIdx = null;
+                    saveProjectsToStorage();
+                    renderCustomLayersCanvas();
+                }
+            };
+
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchend', onEnd);
+        }
+
+        function syncFormFromState() {
+            if (!activeProject) return;
+            document.getElementById('cfg-project-name').value = activeProject.name;
+            document.getElementById('cfg-target-words').value = activeProject.targetWords.join(', ');
+            document.getElementById('cfg-current-count').value = activeProject.count;
+            document.getElementById('cfg-target-goal').value = activeProject.goal;
+            document.getElementById('cfg-font-family').value = activeProject.fontFamily;
+            document.getElementById('cfg-color-mode').value = activeProject.colorMode;
+            document.getElementById('cfg-text-color').value = activeProject.textColor;
+            document.getElementById('cfg-shadow-color').value = activeProject.shadowColor;
+            document.getElementById('cfg-grad-color1').value = activeProject.gradColor1;
+            document.getElementById('cfg-grad-color2').value = activeProject.gradColor2;
+            document.getElementById('cfg-grad-deg').value = activeProject.gradDeg;
+            document.getElementById('grad-deg-val').innerText = activeProject.gradDeg;
+
+            document.getElementById('cfg-card-bg').value = activeProject.cardBg;
+            document.getElementById('cfg-border-color').value = activeProject.borderColor;
+            document.getElementById('cfg-border-width').value = activeProject.borderWidth;
+            document.getElementById('cfg-border-radius').value = activeProject.borderRadius;
+
+            toggleColorPanels();
+        }
+
+        function toggleColorPanels() {
+            const isGrad = document.getElementById('cfg-color-mode').value === 'custom-grad';
+            document.getElementById('panel-solid-color').classList.toggle('hidden', isGrad);
+            document.getElementById('panel-custom-grad').classList.toggle('hidden', !isGrad);
+        }
+
+        function bindEvents() {
+            document.getElementById('nav-btn-home').addEventListener('click', () => switchView('home'));
+
+            document.getElementById('btn-create-project').addEventListener('click', () => {
+                const newProj = createDefaultProject(Date.now().toString(), `カウンター #${projects.length + 1}`);
+                projects.push(newProj);
+                saveProjectsToStorage();
+                switchProject(newProj.id);
+                switchView('editor');
+                showToast('新しいカウンターを作成しました');
+            });
+
+            document.getElementById('btn-toggle-mic').addEventListener('click', () => {
+                if (!recognition) return;
+                if (isListening) {
+                    isListening = false;
+                    recognition.stop();
+                } else {
+                    try { recognition.start(); } catch(e) {}
+                }
+            });
+
+            document.getElementById('btn-inc').addEventListener('click', () => {
+                if (!activeProject) return;
+                activeProject.count++;
+                document.getElementById('cfg-current-count').value = activeProject.count;
+                triggerPopupEffect();
+                updateEditorUI();
+                saveProjectsToStorage();
+            });
+            document.getElementById('btn-dec').addEventListener('click', () => {
+                if (!activeProject) return;
+                activeProject.count = Math.max(0, activeProject.count - 1);
+                document.getElementById('cfg-current-count').value = activeProject.count;
+                updateEditorUI();
+                saveProjectsToStorage();
+            });
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                if (!activeProject) return;
+                activeProject.count = 0;
+                document.getElementById('cfg-current-count').value = 0;
+                updateEditorUI();
+                saveProjectsToStorage();
+                showToast('リセットしました');
+            });
+
+            document.getElementById('btn-add-pop-effect').addEventListener('click', () => {
+                if (!activeProject.popEffects) activeProject.popEffects = [];
+                activeProject.popEffects.push({
+                    id: Date.now().toString(),
+                    text: "+1 ナイス！",
+                    mode: "solid",
+                    color: "#3b82f6",
+                    grad1: "#38bdf8",
+                    grad2: "#818cf8",
+                    deg: 90,
+                    font: "font-rounded"
+                });
+                renderPopEffectsList();
+                saveProjectsToStorage();
+            });
+
+            document.getElementById('cfg-project-name').addEventListener('input', (e) => {
+                if (activeProject) { activeProject.name = e.target.value; saveProjectsToStorage(); }
+            });
+            document.getElementById('cfg-target-words').addEventListener('input', (e) => {
+                if (activeProject) {
+                    activeProject.targetWords = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                    updateEditorUI(); saveProjectsToStorage();
+                }
+            });
+            document.getElementById('cfg-current-count').addEventListener('input', (e) => {
+                if (activeProject) { activeProject.count = parseInt(e.target.value) || 0; updateEditorUI(); saveProjectsToStorage(); }
+            });
+            document.getElementById('cfg-target-goal').addEventListener('input', (e) => {
+                if (activeProject) { activeProject.goal = parseInt(e.target.value) || 1; updateEditorUI(); saveProjectsToStorage(); }
+            });
+
+            document.getElementById('cfg-font-family').addEventListener('change', (e) => { activeProject.fontFamily = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+            document.getElementById('cfg-color-mode').addEventListener('change', (e) => {
+                activeProject.colorMode = e.target.value;
+                toggleColorPanels();
+                updateEditorUI(); saveProjectsToStorage();
+            });
+            document.getElementById('cfg-text-color').addEventListener('input', (e) => { activeProject.textColor = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+            document.getElementById('cfg-shadow-color').addEventListener('input', (e) => { activeProject.shadowColor = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+
+            document.getElementById('cfg-grad-color1').addEventListener('input', (e) => { activeProject.gradColor1 = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+            document.getElementById('cfg-grad-color2').addEventListener('input', (e) => { activeProject.gradColor2 = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+            document.getElementById('cfg-grad-deg').addEventListener('input', (e) => {
+                activeProject.gradDeg = e.target.value;
+                document.getElementById('grad-deg-val').innerText = e.target.value;
+                updateEditorUI(); saveProjectsToStorage();
+            });
+
+            document.getElementById('btn-add-text-layer').addEventListener('click', () => {
+                if (!activeProject.layers) activeProject.layers = [];
+                activeProject.layers.push({
+                    type: 'text', content: "★ 新規テキスト", x: 15, y: 15, size: 22,
+                    font: "font-rounded", colorMode: "solid", color: "#ffffff",
+                    grad1: "#38bdf8", grad2: "#c084fc", gradDeg: 90, rotate: 0, opacity: 100, zIndex: 20
+                });
+                renderLayersControlList();
+                renderCustomLayersCanvas();
+                saveProjectsToStorage();
+            });
+            document.getElementById('btn-add-img-layer').addEventListener('click', () => {
+                if (!activeProject.layers) activeProject.layers = [];
+                activeProject.layers.push({
+                    type: 'image', content: "https://placehold.co/80x80/334155/ffffff?text=Image", x: 20, y: 20, size: 45,
+                    rotate: 0, opacity: 100, zIndex: 20
+                });
+                renderLayersControlList();
+                renderCustomLayersCanvas();
+                saveProjectsToStorage();
+            });
+
+            document.getElementById('cfg-card-bg').addEventListener('input', (e) => { activeProject.cardBg = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+            document.getElementById('cfg-border-color').addEventListener('input', (e) => { activeProject.borderColor = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+            document.getElementById('cfg-border-width').addEventListener('input', (e) => { activeProject.borderWidth = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+            document.getElementById('cfg-border-radius').addEventListener('input', (e) => { activeProject.borderRadius = e.target.value; updateEditorUI(); saveProjectsToStorage(); });
+
+            document.getElementById('btn-share').addEventListener('click', generateShareUrl);
+        }
+
+        function updateMicUI() {
+            const btn = document.getElementById('btn-toggle-mic');
+            const txt = document.getElementById('mic-status-text');
+            const dot = document.getElementById('mic-indicator-dot');
+            const cardDot = document.getElementById('card-rec-dot');
+
+            if (isListening) {
+                btn.className = "px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg text-sm flex items-center gap-2 shadow-md shadow-red-900/40";
+                txt.innerText = "マイク停止";
+                dot.className = "w-3 h-3 rounded-full bg-red-500 recording-dot inline-block";
+                cardDot.style.display = "inline-block";
+            } else {
+                btn.className = "px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm flex items-center gap-2 shadow-md shadow-emerald-900/30";
+                txt.innerText = "マイク開始";
+                dot.className = "w-3 h-3 rounded-full bg-gray-500 inline-block";
+                cardDot.style.display = "none";
+            }
+        }
+
+        function generateShareUrl() {
+            if (!activeProject) return;
+            try {
+                const shareObj = JSON.parse(JSON.stringify(activeProject));
+                const b64 = btoa(encodeURIComponent(JSON.stringify(shareObj)));
+                const shareUrl = `${window.location.origin}${window.location.pathname}#${b64}`;
+
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = shareUrl;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+
+                showToast('設定を含んだ共有URLをコピーしました！');
+            } catch (e) {
+                showToast('URLの生成に失敗しました');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-message');
+            document.getElementById('toast-text').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2800);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function escapeRegExp(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+    </script>
+</body>
+</html>
