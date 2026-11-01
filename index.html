@@ -4,548 +4,540 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>音声ワードカウンター</title>
-  <!-- Google Fonts 読み込み -->
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts 大量読み込み -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Caveat:wght@700&family=Dela+Gothic+One&family=Fredoka:wght@600&family=Hachi+Maru+Pop&family=Kiwi+Maru:wght@500&family=Kosugi+Maru&family=Mochiy+Pop+One&family=Noto+Sans+JP:wght@700&family=Orbitron:wght@700&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@700&family=Rampart+One&family=Reggae+One&family=Righteous&family=RocknRoll+One&family=Shippori+Mincho:wght@700&family=Yuji+Boku&family=Zen+Kurenaido&family=Zen+Maru+Gothic:wght@700&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Caveat:wght@700&family=Dela+Gothic+One&family=Fredoka:wght@600&family=Hachi+Maru+Pop&family=Kiwi+Maru:wght@500&family=Kosugi+Maru&family=Mochiy+Pop+One&family=Noto+Sans+JP:wght@700;900&family=Orbitron:wght@800&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@800&family=Rampart+One&family=Reggae+One&family=Righteous&family=RocknRoll+One&family=Shippori+Mincho:wght@700&family=Yuji+Boku&family=Zen+Kurenaido&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    /* Google Fonts */
+    .font-noto { font-family: 'Noto Sans JP', sans-serif; }
+    .font-delagothic { font-family: 'Dela Gothic One', cursive; }
+    .font-mochiy { font-family: 'Mochiy Pop One', sans-serif; }
+    .font-zenmaru { font-family: 'Zen Maru Gothic', sans-serif; }
+    .font-kiwimaru { font-family: 'Kiwi Maru', serif; }
+    .font-rampart { font-family: 'Rampart One', cursive; }
+    .font-hachimaru { font-family: 'Hachi Maru Pop', cursive; }
+    .font-shippori { font-family: 'Shippori Mincho', serif; }
+    .font-zenkurenai { font-family: 'Zen Kurenaido', sans-serif; }
+    .font-yujiboku { font-family: 'Yuji Boku', cursive; }
+    .font-kosugimaru { font-family: 'Kosugi Maru', sans-serif; }
+    .font-rocknroll { font-family: 'RocknRoll One', sans-serif; }
+    .font-reggae { font-family: 'Reggae One', cursive; }
+    .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    .font-bungee { font-family: 'Bungee', cursive; }
+    .font-fredoka { font-family: 'Fredoka', sans-serif; }
+    .font-anton { font-family: 'Anton', sans-serif; }
+    .font-righteous { font-family: 'Righteous', cursive; }
+    .font-marker { font-family: 'Permanent Marker', cursive; }
+    .font-caveat { font-family: 'Caveat', cursive; }
+    .font-pacifico { font-family: 'Pacifico', cursive; }
+    .font-poppins { font-family: 'Poppins', sans-serif; }
+
+    /* 録音点滅 */
+    @keyframes pulse-red {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.6; }
     }
+    .recording-dot { animation: pulse-red 1.2s infinite ease-in-out; }
 
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f3f4f6;
-      color: #111827;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    /* ポップアップ跳ね上がりエフェクト (見切れ防止) */
+    @keyframes popup-float {
+      0% { opacity: 0; transform: translateY(20px) scale(0.4) rotate(-8deg); }
+      35% { opacity: 1; transform: translateY(-30px) scale(1.25) rotate(4deg); }
+      70% { opacity: 1; transform: translateY(-55px) scale(1) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(-85px) scale(0.85); }
     }
-
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 12px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .app-title {
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: #1f2937;
-    }
-
-    button {
-      cursor: pointer;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: bold;
-      transition: all 0.2s;
-    }
-
-    .btn-primary { background: #3b82f6; color: white; }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-danger { background: #ef4444; color: white; }
-    .btn-danger:hover { background: #dc2626; }
-    .btn-secondary { background: #e5e7eb; color: #374151; }
-    .btn-secondary:hover { background: #d1d5db; }
-
-    main {
-      flex: 1;
-      padding: 24px;
-      max-width: 1000px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    /* ホーム画面 */
-    .project-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    .project-card {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      border: 2px solid #e5e7eb;
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .project-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    }
-
-    .project-delete-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #fee2e2;
-      color: #ef4444;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      font-size: 14px;
-    }
-    .project-delete-btn:hover { background: #ef4444; color: white; }
-
-    .project-name { font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; }
-    .project-date { font-size: 0.8rem; color: #6b7280; }
-
-    /* 編集画面 */
-    .editor-layout {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      align-items: center;
-    }
-
-    /* オーバーレイカード */
-    .counter-stage {
-      position: relative;
-      width: 100%;
-      max-width: 800px;
-      display: flex;
-      justify-content: center;
-      padding-top: 50px;
-    }
-
-    .counter-card {
-      position: relative;
-      width: 100%;
-      min-height: 160px;
-      border-radius: 20px;
-      border: 4px solid #4b5563;
-      background-color: #1f2937;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
-      overflow: visible !important; /* エフェクト見切れ防止 */
-    }
-
-    /* エフェクト領域 */
-    .effects-container {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      width: 100%;
-      height: 60px;
+    .pop-effect {
+      animation: popup-float 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
       pointer-events: none;
-      z-index: 100;
-      overflow: visible;
-    }
-
-    .popup-effect {
       position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-weight: bold;
-      white-space: nowrap;
-      animation: popupAnim 0.8s ease-out forwards;
-      pointer-events: none;
-    }
-
-    @keyframes popupAnim {
-      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.5); }
-      50% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
-      100% { opacity: 0; transform: translate(-50%, -50px) scale(1); }
-    }
-
-    .count-display-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 10;
-    }
-
-    .rec-dot {
-      width: 16px;
-      height: 16px;
-      background-color: #ef4444;
-      border-radius: 50%;
-      opacity: 0.3;
-    }
-    .rec-dot.active {
-      opacity: 1;
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-      70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-    }
-
-    .count-number { line-height: 1; user-select: none; }
-
-    .progress-container {
-      width: 80%;
-      margin-top: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 10;
-    }
-
-    .progress-bar-bg {
-      flex: 1;
-      height: 16px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: #3b82f6;
-      transition: width 0.3s ease;
-      border-radius: 10px;
-    }
-
-    .progress-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
       white-space: nowrap;
     }
 
-    .custom-layer {
-      position: absolute;
+    /* カスタムスクロールバー */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+    /* チェッカー背景 */
+    .checker-bg {
+      background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: #0f172a;
+    }
+
+    /* ドラッグ可能要素 */
+    .draggable-layer {
       cursor: move;
       user-select: none;
-      z-index: 20;
+      touch-action: none;
     }
 
-    /* 配信操作・パネル */
-    .control-panel-row {
-      display: flex;
-      gap: 16px;
-      width: 100%;
-      max-width: 800px;
-    }
-
-    .speech-log-box {
-      flex: 1;
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      border: 1px solid #e5e7eb;
-      max-height: 120px;
-      overflow-y: auto;
-    }
-    .speech-log-item { font-size: 0.85rem; padding: 4px 0; border-bottom: 1px solid #f3f4f6; color: #4b5563; }
-
-    .settings-panel {
-      width: 100%;
-      max-width: 800px;
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      border-bottom: 2px solid #f3f4f6;
-      margin-bottom: 20px;
-    }
-    .tab-btn {
-      background: none;
-      border: none;
-      padding: 8px 16px;
-      font-weight: bold;
-      color: #6b7280;
-      border-bottom: 3px solid transparent;
-      border-radius: 0;
-    }
-    .tab-btn.active { color: #3b82f6; border-bottom-color: #3b82f6; }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: flex; flex-direction: column; gap: 16px; }
-
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 0.85rem; font-weight: bold; color: #374151; }
-    .form-row { display: flex; gap: 12px; align-items: center; }
-
-    input[type="text"], input[type="number"], select {
-      padding: 8px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 0.9rem;
-    }
-
-    /* 配信（開始）時 非表示設定 */
+    /* 配信（マイクON）モードの時のUI非表示設定 */
     body.live-mode header,
-    body.live-mode .speech-log-box,
-    body.live-mode .settings-panel,
-    body.live-mode .non-live-ui {
+    body.live-mode #speech-log-container,
+    body.live-mode #control-panel,
+    body.live-mode #status-bar,
+    body.live-mode #manual-controls {
       display: none !important;
     }
   </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-noto selection:bg-indigo-500 selection:text-white">
 
-  <header>
-    <div class="app-title">音声ワードカウンター</div>
-    <button id="btn-home" class="btn-secondary" style="display: none;" onclick="showHome()">← ホーム一覧へ</button>
+  <!-- ヘッダー -->
+  <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+        <i class="fa-solid fa-microphone-lines text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-lg font-black tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">音声ワードカウンター</h1>
+        <p class="text-xs text-slate-400">リアルタイム言葉検知オーバーレイ作成ツール</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button id="nav-btn-home" onclick="showHomeView()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-sm flex items-center gap-2 transition-all shadow-md">
+        <i class="fa-solid fa-house"></i> マイ作品一覧
+      </button>
+      <button id="btn-share" onclick="copyShareUrl()" class="hidden px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-sm flex items-center gap-2">
+        <i class="fa-solid fa-share-nodes"></i> 共有リンク
+      </button>
+    </div>
   </header>
 
-  <main>
-    <!-- ホーム画面 -->
-    <div id="view-home">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>作品一覧</h2>
-        <button class="btn-primary" onclick="createNewProject()">＋ 新規作成</button>
+  <!-- 1. ホーム画面 (プロジェクト一覧) -->
+  <section id="view-home" class="flex-1 p-6 lg:p-10 max-w-6xl mx-auto w-full">
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h2 class="text-2xl font-extrabold text-white">カウンター作品一覧</h2>
+        <p class="text-sm text-slate-400">保存された作品の選択・作成・削除が行えます</p>
       </div>
-      <div id="project-list" class="project-grid"></div>
+      <button onclick="createNewProject()" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-105">
+        <i class="fa-solid fa-plus text-lg"></i> 新しいカウンターを作成
+      </button>
     </div>
 
-    <!-- 編集・カウンター画面 -->
-    <div id="view-editor" class="editor-layout" style="display: none;">
+    <!-- プロジェクト一覧グリッド -->
+    <div id="project-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+    <div id="empty-state" class="hidden text-center py-16 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-8">
+      <div class="w-16 h-16 bg-slate-800 text-slate-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+        <i class="fa-solid fa-folder-open"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-300 mb-1">作品がありません</h3>
+      <p class="text-xs text-slate-500 mb-4">上の「+ 新しいカウンターを作成」ボタンを押してください。</p>
+    </div>
+  </section>
+
+  <!-- 2. エディタ＆カウンター画面 -->
+  <main id="view-editor" class="flex-1 flex flex-col lg:flex-row overflow-hidden hidden">
+    
+    <!-- プレビュー／キャンバスエリア -->
+    <section class="w-full lg:w-3/5 p-4 lg:p-8 flex flex-col items-center justify-center checker-bg relative min-h-[460px] select-none">
       
-      <div class="counter-stage">
-        <div id="counter-card" class="counter-card">
-          <div id="effects-container" class="effects-container"></div>
+      <!-- 認識ステータスバー -->
+      <div id="status-bar" class="w-full max-w-2xl mb-4 flex items-center justify-between text-xs bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-2.5 backdrop-blur shadow-lg">
+        <div class="flex items-center gap-2.5">
+          <span id="mic-indicator-dot" class="w-3 h-3 rounded-full bg-gray-500 inline-block"></span>
+          <span id="transcript-display" class="text-slate-300 italic truncate max-w-[220px] sm:max-w-md">マイクは停止中</span>
+        </div>
+        <div class="text-slate-400">
+          検知単語: <strong id="target-words-badge" class="text-indigo-400 font-bold">なし</strong>
+        </div>
+      </div>
 
-          <div class="count-display-wrapper">
-            <div id="rec-dot" class="rec-dot"></div>
-            <div id="count-number" class="count-number">0</div>
+      <!-- オーバーレイカード本体 -->
+      <div id="overlay-card" class="w-full max-w-2xl min-h-[170px] transition-all shadow-2xl relative flex flex-col items-center justify-center p-6 border-4 overflow-visible"
+           style="background-color: #1e293b; border-color: #64748b; border-radius: 20px;">
+        
+        <!-- 跳ね上がりエフェクトコンテナ（見切れ防止でoverflow開放） -->
+        <div id="popup-container" class="absolute inset-x-0 -top-12 flex justify-center pointer-events-none z-50 overflow-visible"></div>
+
+        <!-- 中央コンテンツ (録音ドット + 数字 + メーター) -->
+        <div class="flex-1 flex flex-col justify-center items-center w-full z-10 pointer-events-none">
+          <div class="flex items-center justify-center gap-3 mb-1">
+            <span id="card-rec-dot" class="w-4 h-4 rounded-full bg-red-600 recording-dot inline-block shadow-lg shadow-red-600/50"></span>
+            <div id="count-display" class="font-bold text-6xl sm:text-7xl text-white tracking-wider transition-all">0</div>
           </div>
 
-          <div id="progress-container" class="progress-container">
-            <div class="progress-bar-bg">
-              <div id="progress-fill" class="progress-bar-fill"></div>
+          <!-- メーター -->
+          <div id="meter-container" class="w-full max-w-md mt-2 flex items-center gap-3">
+            <div class="flex-1 bg-slate-950/70 rounded-full h-4 sm:h-5 p-0.5 border border-slate-700/60 overflow-hidden relative shadow-inner">
+              <div id="meter-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
             </div>
-            <div class="progress-meta">
-              <span id="meter-icon">🤌</span>
-              <span id="meter-percent">0.0%</span>
+            
+            <div class="flex items-center gap-1.5 min-w-[70px] justify-end font-bold">
+              <span id="meter-icon" class="transition-all">🤌</span>
+              <span id="meter-percent" class="transition-all">0.0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ドラッグ配置カスタムレイヤーを描画するコンテナ -->
+        <div id="custom-layers-container" class="absolute inset-0 z-20 pointer-events-none"></div>
+
+      </div>
+
+      <!-- 開始ボタン ＆ 手動コントローラー -->
+      <div id="manual-controls" class="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <button id="btn-toggle-mic" onclick="toggleSpeech()" class="px-6 h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-base flex items-center gap-2 active:scale-95 transition-all shadow-lg shadow-emerald-900/30">
+          <i class="fa-solid fa-microphone"></i> <span id="mic-btn-text">▶ 開始 (マイクON)</span>
+        </button>
+        <button onclick="adjustCount(-1)" class="w-12 h-12 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-xl border border-slate-700 flex items-center justify-center active:scale-95 transition-all">-1</button>
+        <button onclick="adjustCount(1)" class="w-12 h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xl flex items-center justify-center active:scale-95 transition-all">+1</button>
+        <button onclick="resetCount()" class="w-12 h-12 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 rounded-xl font-bold border border-slate-700 flex items-center justify-center active:scale-95 transition-all" title="リセット">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+      </div>
+
+      <!-- 発言履歴ログ -->
+      <div id="speech-log-container" class="w-full max-w-2xl mt-4 bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs">
+        <div class="text-slate-400 font-bold mb-1 flex items-center gap-1">
+          <i class="fa-solid fa-list-check"></i> 発言検知タイムライン
+        </div>
+        <div id="speech-log-list" class="max-h-20 overflow-y-auto space-y-1 text-slate-300"></div>
+      </div>
+
+    </section>
+
+    <!-- 統合スクロール設定パネル -->
+    <section id="control-panel" class="w-full lg:w-2/5 bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-800 p-4 lg:p-6 overflow-y-auto space-y-6">
+      
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h2 class="text-sm font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+          <i class="fa-solid fa-sliders"></i> 設定カスタマイズ
+        </h2>
+        <input type="text" id="cfg-project-name" oninput="updateCurrentProjectState()" class="bg-slate-950 border border-slate-700 rounded px-2.5 py-1 text-xs text-right text-slate-200 font-bold w-44 focus:outline-none focus:border-indigo-500" value="無題のプロジェクト">
+      </div>
+
+      <!-- 1. 音声検知 & カウント基本設定 -->
+      <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+        <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+          <i class="fa-solid fa-bullhorn text-indigo-400"></i> 音声検知 & カウント
+        </h3>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">対象ワード (カンマ区切り)</label>
+          <input type="text" id="cfg-target-words" oninput="updateCurrentProjectState()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" value="にゃー, かわいい, すごい">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">現在のカウント</label>
+            <input type="number" id="cfg-current-count" onchange="updateCurrentProjectState()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none" value="0">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">目標カウント</label>
+            <input type="number" id="cfg-target-goal" onchange="updateCurrentProjectState()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none" value="100">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. カウント数字スタイル (グラデーション & 影) -->
+      <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+        <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+          <i class="fa-solid fa-font text-emerald-400"></i> カウント数字スタイル
+        </h3>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">フォント選択</label>
+            <select id="cfg-font-family" onchange="updateCurrentProjectState()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">カラーモード</label>
+            <select id="cfg-color-mode" onchange="toggleColorPanels(); updateCurrentProjectState();" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+              <option value="solid">単色 (Solid)</option>
+              <option value="custom-grad">カスタムグラデーション</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="panel-solid-color" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">文字色</label>
+            <input type="color" id="cfg-text-color" oninput="updateCurrentProjectState()" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#ffffff">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">影の色</label>
+            <input type="color" id="cfg-shadow-color" oninput="updateCurrentProjectState()" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#000000">
+          </div>
+        </div>
+
+        <div id="panel-custom-grad" class="hidden space-y-2 p-2.5 bg-slate-950/60 rounded-lg border border-slate-700/50">
+          <span class="text-xs font-bold text-indigo-300">グラデーション作成</span>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-400">開始色</label>
+              <input type="color" id="cfg-grad-color1" oninput="updateCurrentProjectState()" class="w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="#38bdf8">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400">終了色</label>
+              <input type="color" id="cfg-grad-color2" oninput="updateCurrentProjectState()" class="w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="#c084fc">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400">角度 (<span id="grad-deg-val">90</span>°)</label>
+              <input type="range" id="cfg-grad-deg" min="0" max="360" value="90" oninput="document.getElementById('grad-deg-val').innerText=this.value; updateCurrentProjectState();" class="w-full accent-indigo-500">
             </div>
           </div>
         </div>
       </div>
 
-      <div class="control-panel-row non-live-ui">
-        <button id="btn-toggle-mic" class="btn-primary" style="font-size: 1.1rem; padding: 12px 24px;" onclick="toggleSpeech()">▶ 開始 (マイクON)</button>
-        <div class="speech-log-box">
-          <div style="font-weight: bold; margin-bottom: 4px; font-size: 0.8rem; color: #9ca3af;">発言履歴</div>
-          <div id="speech-log-list"></div>
+      <!-- 3. メーターカスタマイズ -->
+      <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-4">
+        <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+          <i class="fa-solid fa-chart-line text-teal-400"></i> プログレスメーター設定
+        </h3>
+        
+        <!-- パーセンテージ表示設定 -->
+        <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-700/60 space-y-2">
+          <span class="text-xs font-bold text-teal-300">パーセンテージ（〇〇%）の見た目</span>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">フォント</label>
+              <select id="cfg-pct-font" onchange="updateCurrentProjectState()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white"></select>
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">サイズ (px)</label>
+              <input type="number" id="cfg-pct-size" min="8" max="40" value="14" oninput="updateCurrentProjectState()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">文字色</label>
+              <input type="color" id="cfg-pct-color" oninput="updateCurrentProjectState()" class="w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="#e2e8f0">
+            </div>
+          </div>
+        </div>
+
+        <!-- メーター横アイコン設定 -->
+        <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-700/60 space-y-2">
+          <span class="text-xs font-bold text-amber-300">メーター横アイコン / テキスト</span>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">文字 / 絵文字</label>
+              <input type="text" id="cfg-icon-text" oninput="updateCurrentProjectState()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" value="🤌">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">フォント</label>
+              <select id="cfg-icon-font" onchange="updateCurrentProjectState()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white"></select>
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">文字色</label>
+              <input type="color" id="cfg-icon-color" oninput="updateCurrentProjectState()" class="w-full h-7 bg-slate-900 border border-slate-700 rounded p-0.5 cursor-pointer" value="#fbbf24">
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 設定パネル -->
-      <div class="settings-panel non-live-ui">
-        <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('tab-basic', event)">基本・ワード</button>
-          <button class="tab-btn" onclick="switchTab('tab-style', event)">デザイン・色</button>
-          <button class="tab-btn" onclick="switchTab('tab-meter', event)">メーター設定</button>
-          <button class="tab-btn" onclick="switchTab('tab-effects', event)">上昇エフェクト</button>
-          <button class="tab-btn" onclick="switchTab('tab-layers', event)">カスタムレイヤー</button>
+      <!-- 4. カウント上昇ポップアップエフェクト -->
+      <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> カウント上昇文字エフェクト
+          </h3>
+          <button onclick="addPopEffect()" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-xs font-bold flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> 追加
+          </button>
         </div>
-
-        <!-- 基本設定 -->
-        <div id="tab-basic" class="tab-content active">
-          <div class="form-group">
-            <label>作品タイトル</label>
-            <input type="text" id="input-proj-name" oninput="updateCurrentProjectData()">
-          </div>
-          <div class="form-group">
-            <label>反応するキーワード（カンマ区切りで複数指定可）</label>
-            <input type="text" id="input-keywords" placeholder="例: すごい,かわいい,神" oninput="updateCurrentProjectData()">
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1;">
-              <label>現在のカウント</label>
-              <input type="number" id="input-count" value="0" onchange="updateCurrentProjectData()">
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label>目標カウント</label>
-              <input type="number" id="input-target" value="100" onchange="updateCurrentProjectData()">
-            </div>
-          </div>
-        </div>
-
-        <!-- デザイン・色設定 -->
-        <div id="tab-style" class="tab-content">
-          <div class="form-group">
-            <label>フォント選択</label>
-            <select id="select-font" onchange="updateCurrentProjectData()"></select>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>文字サイズ(px)</label>
-              <input type="number" id="input-font-size" value="64" onchange="updateCurrentProjectData()">
-            </div>
-            <div class="form-group">
-              <label>文字色タイプ</label>
-              <select id="select-text-color-type" onchange="updateCurrentProjectData()">
-                <option value="single">単色</option>
-                <option value="gradient">グラデーション</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row" id="text-color-single-group">
-            <div class="form-group">
-              <label>文字色</label>
-              <input type="color" id="input-text-color" value="#ffffff" onchange="updateCurrentProjectData()">
-            </div>
-          </div>
-          <div class="form-row" id="text-color-grad-group" style="display:none;">
-            <div class="form-group"><label>開始色</label><input type="color" id="input-text-grad-1" value="#ff7e5f" onchange="updateCurrentProjectData()"></div>
-            <div class="form-group"><label>終了色</label><input type="color" id="input-text-grad-2" value="#feb47b" onchange="updateCurrentProjectData()"></div>
-            <div class="form-group"><label>角度(deg)</label><input type="number" id="input-text-grad-deg" value="90" onchange="updateCurrentProjectData()"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>カード背景色</label><input type="color" id="input-bg-color" value="#1f2937" onchange="updateCurrentProjectData()"></div>
-            <div class="form-group"><label>枠線色</label><input type="color" id="input-border-color" value="#4b5563" onchange="updateCurrentProjectData()"></div>
-          </div>
-        </div>
-
-        <!-- メーター設定 -->
-        <div id="tab-meter" class="tab-content">
-          <div class="form-group">
-            <label>メーター横のテキスト/絵文字</label>
-            <input type="text" id="input-meter-icon" value="🤌" oninput="updateCurrentProjectData()">
-          </div>
-          <div class="form-group">
-            <label>パーセンテージフォント</label>
-            <select id="select-meter-font" onchange="updateCurrentProjectData()"></select>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>文字サイズ(px)</label><input type="number" id="input-meter-size" value="16" onchange="updateCurrentProjectData()"></div>
-            <div class="form-group"><label>文字色</label><input type="color" id="input-meter-color" value="#ffffff" onchange="updateCurrentProjectData()"></div>
-          </div>
-        </div>
-
-        <!-- 上昇エフェクト設定 -->
-        <div id="tab-effects" class="tab-content">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <label style="font-weight:bold;">エフェクト一覧（カウント時にランダム表示）</label>
-            <button class="btn-secondary" onclick="addEffectPreset()">＋ 追加</button>
-          </div>
-          <div id="effects-list-editor" style="display:flex; flex-direction:column; gap:10px;"></div>
-        </div>
-
-        <!-- カスタムレイヤー設定 -->
-        <div id="tab-layers" class="tab-content">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <label style="font-weight:bold;">ドラッグ配置レイヤー</label>
-            <div style="display:flex; gap:8px;">
-              <button class="btn-secondary" onclick="addCustomLayer('text')">＋ テキスト</button>
-              <button class="btn-secondary" onclick="addCustomLayer('image')">＋ 画像</button>
-            </div>
-          </div>
-          <div id="layers-list-editor" style="display:flex; flex-direction:column; gap:10px;"></div>
-        </div>
-
+        <div id="pop-effects-list" class="space-y-2"></div>
       </div>
-    </div>
+
+      <!-- 5. 自由ドラッグレイヤー (高度なグラデーション・回転・フォント調整) -->
+      <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+            <i class="fa-solid fa-layer-group text-pink-400"></i> カスタムレイヤー (イラスト・文字)
+          </h3>
+          <div class="flex gap-2">
+            <button onclick="addCustomLayer('text')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-bold flex items-center gap-1">
+              <i class="fa-solid fa-font"></i> テキスト
+            </button>
+            <button onclick="addCustomLayer('image')" class="px-2.5 py-1 bg-pink-600 hover:bg-pink-500 text-white rounded text-xs font-bold flex items-center gap-1">
+              <i class="fa-solid fa-image"></i> 画像URL
+            </button>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400">カード上の要素はドラッグ＆ドロップで好きな位置に移動できます。</p>
+        <div id="layers-list" class="space-y-3"></div>
+      </div>
+
+      <!-- 6. カード枠・背景色設定 -->
+      <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+        <h3 class="text-xs font-bold text-slate-300 flex items-center gap-2 uppercase">
+          <i class="fa-solid fa-palette text-yellow-400"></i> カード枠・背景デザイン
+        </h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">背景色</label>
+            <input type="color" id="cfg-card-bg" oninput="updateCurrentProjectState()" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#1e293b">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">枠線の色</label>
+            <input type="color" id="cfg-border-color" oninput="updateCurrentProjectState()" class="w-full h-8 bg-slate-950 border border-slate-700 rounded-lg p-1 cursor-pointer" value="#64748b">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">枠線幅 (px)</label>
+            <input type="range" id="cfg-border-width" min="0" max="12" value="4" oninput="updateCurrentProjectState()" class="w-full accent-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">角の丸み (px)</label>
+            <input type="range" id="cfg-border-radius" min="0" max="40" value="20" oninput="updateCurrentProjectState()" class="w-full accent-indigo-500">
+          </div>
+        </div>
+      </div>
+
+    </section>
   </main>
 
+  <!-- トースト通知 -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 flex items-center gap-2 z-50 text-sm">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toast-text">保存されました</span>
+  </div>
+
   <script>
+    // 利用可能なフォント一覧
     const FONT_OPTIONS = [
-      'Noto Sans JP', 'Dela Gothic One', 'Mochiy Pop One', 'Zen Maru Gothic',
-      'Kiwi Maru', 'Rampart One', 'Hachi Maru Pop', 'Shippori Mincho',
-      'Zen Kurenaido', 'Yuji Boku', 'Kosugi Maru', 'RocknRoll One',
-      'Reggae One', 'Orbitron', 'Bungee', 'Pacifico', 'Fredoka',
-      'Anton', 'Righteous', 'Permanent Marker', 'Poppins', 'Caveat'
+      { name: "標準丸ゴシック", class: "font-rounded" },
+      { name: "RocknRoll One", class: "font-rocknroll" },
+      { name: "Reggae One", class: "font-reggae" },
+      { name: "Dela Gothic One", class: "font-delagothic" },
+      { name: "Mochiy Pop One", class: "font-mochiy" },
+      { name: "Zen 丸ゴシック", class: "font-zenmaru" },
+      { name: "Kiwi 丸ゴシック", class: "font-kiwimaru" },
+      { name: "Rampart One", class: "font-rampart" },
+      { name: "Hachi Maru Pop", class: "font-hachimaru" },
+      { name: "しっぽり明朝", class: "font-shippori" },
+      { name: "Zen 呉竹", class: "font-zenkurenai" },
+      { name: "Yuji 墨", class: "font-yujiboku" },
+      { name: "小杉丸ゴシック", class: "font-kosugimaru" },
+      { name: "Orbitron (SF)", class: "font-orbitron" },
+      { name: "Bungee (Pop)", class: "font-bungee" },
+      { name: "Fredoka", class: "font-fredoka" },
+      { name: "Anton (Impact)", class: "font-anton" },
+      { name: "Righteous", class: "font-righteous" },
+      { name: "Permanent Marker", class: "font-marker" },
+      { name: "Caveat (手書き)", class: "font-caveat" },
+      { name: "Pacifico", class: "font-pacifico" },
+      { name: "Poppins", class: "font-poppins" }
     ];
 
     let projects = [];
-    let currentProjId = null;
+    let activeProject = null;
     let recognition = null;
     let isListening = false;
-    let lastRecognizedTime = 0; // 重複カウント防止用タイムスタンプ
+    let lastRecognizedText = "";
+    let lastRecognizedTime = 0;
 
+    // アプリ初期化
     window.addEventListener('DOMContentLoaded', () => {
-      populateFontDropdowns();
+      populateFontSelects();
       loadProjectsFromStorage();
-      showHome();
+      
+      // URLハッシュからのデータ復元チェック
+      if (window.location.hash.startsWith('#data=')) {
+        try {
+          const json = decodeURIComponent(atob(window.location.hash.replace('#data=', '')));
+          const sharedProj = JSON.parse(json);
+          sharedProj.id = 'shared_' + Date.now();
+          projects.unshift(sharedProj);
+          saveProjectsToStorage();
+          openProject(sharedProj.id);
+          showToast('共有された設定を読み込みました！');
+          window.location.hash = '';
+        } catch(e) {
+          console.error("Shared data parse error", e);
+        }
+      } else {
+        showHomeView();
+      }
+
       setupSpeechRecognition();
     });
 
-    function populateFontDropdowns() {
-      const selects = [document.getElementById('select-font'), document.getElementById('select-meter-font')];
-      selects.forEach(select => {
-        select.innerHTML = '';
-        FONT_OPTIONS.forEach(font => {
+    // ドロップダウンにフォント選択項目を流し込み (スタイル直接反映)
+    function populateFontSelects() {
+      const fontSelects = [
+        document.getElementById('cfg-font-family'),
+        document.getElementById('cfg-pct-font'),
+        document.getElementById('cfg-icon-font')
+      ];
+      
+      fontSelects.forEach(sel => {
+        if (!sel) return;
+        sel.innerHTML = '';
+        FONT_OPTIONS.forEach(f => {
           const opt = document.createElement('option');
-          opt.value = font;
-          opt.textContent = font;
-          opt.style.fontFamily = `'${font}', sans-serif`;
-          select.appendChild(opt);
+          opt.value = f.class;
+          opt.innerText = f.name;
+          opt.className = f.class;
+          sel.appendChild(opt);
         });
       });
     }
 
+    // ストレージ読み書き
     function loadProjectsFromStorage() {
-      const data = localStorage.getItem('voice_word_counter_projects');
-      if (data) {
-        try { projects = JSON.parse(data); } catch(e) { projects = []; }
+      const stored = localStorage.getItem('speech_word_counter_projects');
+      if (stored) {
+        try { projects = JSON.parse(stored); } catch(e) { projects = []; }
       }
     }
 
     function saveProjectsToStorage() {
-      localStorage.setItem('voice_word_counter_projects', JSON.stringify(projects));
+      if (activeProject) {
+        activeProject.updatedAt = new Date().toISOString();
+      }
+      localStorage.setItem('speech_word_counter_projects', JSON.stringify(projects));
     }
 
-    function showHome() {
+    // ホーム表示
+    function showHomeView() {
       if (isListening) stopSpeech();
       document.body.classList.remove('live-mode');
-      document.getElementById('view-home').style.display = 'block';
-      document.getElementById('view-editor').style.display = 'none';
-      document.getElementById('btn-home').style.display = 'none';
-      renderHome();
+      document.getElementById('view-home').classList.remove('hidden');
+      document.getElementById('view-editor').classList.add('hidden');
+      document.getElementById('btn-share').classList.add('hidden');
+      renderProjectGrid();
     }
 
-    function renderHome() {
-      const listContainer = document.getElementById('project-list');
-      listContainer.innerHTML = '';
+    function renderProjectGrid() {
+      const grid = document.getElementById('project-grid');
+      const empty = document.getElementById('empty-state');
+      grid.innerHTML = '';
+
+      if (projects.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
 
       projects.forEach(p => {
         const card = document.createElement('div');
-        card.className = 'project-card';
+        card.className = "bg-slate-900 border border-slate-800 hover:border-indigo-500/80 rounded-2xl p-5 relative cursor-pointer transition-all hover:-translate-y-1 shadow-lg group";
         card.onclick = () => openProject(p.id);
 
-        const delBtn = document.createElement('button');
-        delBtn.className = 'project-delete-btn';
-        delBtn.innerHTML = '✕';
-        delBtn.onclick = (e) => {
-          e.stopPropagation();
-          deleteProject(p.id);
-        };
+        const dateStr = new Date(p.updatedAt).toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
 
-        const name = document.createElement('div');
-        name.className = 'project-name';
-        name.textContent = p.name || '無題のプロジェクト';
-
-        const date = document.createElement('div');
-        date.className = 'project-date';
-        date.textContent = '最終更新: ' + new Date(p.updatedAt).toLocaleString();
-
-        card.appendChild(delBtn);
-        card.appendChild(name);
-        card.appendChild(date);
-        listContainer.appendChild(card);
+        card.innerHTML = `
+          <button onclick="event.stopPropagation(); deleteProject('${p.id}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-red-400 hover:bg-slate-700 flex items-center justify-center transition-all z-10" title="削除">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="text-xs font-bold text-indigo-400 mb-1">カウント: ${p.count}</div>
+          <h3 class="text-lg font-black text-white mb-2 truncate pr-6">${escapeHtml(p.name)}</h3>
+          <div class="text-[11px] text-slate-500">最終更新: ${dateStr}</div>
+        `;
+        grid.appendChild(card);
       });
     }
 
@@ -553,29 +545,34 @@
       const newProj = {
         id: 'proj_' + Date.now(),
         name: '新規カウンター',
-        updatedAt: Date.now(),
-        keywords: ['すごい', '神'],
+        updatedAt: new Date().toISOString(),
         count: 0,
-        target: 100,
-        font: 'Mochiy Pop One',
-        fontSize: 64,
-        textColorType: 'single',
+        goal: 100,
+        targetWords: ['にゃー', 'かわいい', 'すごい'],
+        fontFamily: 'font-mochiy',
+        colorMode: 'solid',
         textColor: '#ffffff',
-        textGrad1: '#ff7e5f',
-        textGrad2: '#feb47b',
-        textGradDeg: 90,
-        bgColor: '#1f2937',
-        borderColor: '#4b5563',
+        shadowColor: '#000000',
+        gradColor1: '#38bdf8',
+        gradColor2: '#c084fc',
+        gradDeg: 90,
+        cardBg: '#1e293b',
+        borderColor: '#64748b',
+        borderWidth: 4,
+        borderRadius: 20,
         meterIcon: '🤌',
-        meterFont: 'Noto Sans JP',
-        meterSize: 16,
-        meterColor: '#ffffff',
-        effects: [
-          { text: '+1', color: '#3b82f6', font: 'Mochiy Pop One' },
-          { text: 'Nice!', color: '#10b981', font: 'Fredoka' }
+        meterIconFont: 'font-rounded',
+        meterIconColor: '#fbbf24',
+        meterPctFont: 'font-rounded',
+        meterPctSize: 14,
+        meterPctColor: '#e2e8f0',
+        popEffects: [
+          { id: 'p1', text: '+1 しゃべった！', color: '#f59e0b', font: 'font-rocknroll' },
+          { id: 'p2', text: 'GREAT!', color: '#10b981', font: 'font-bungee' }
         ],
         layers: []
       };
+
       projects.unshift(newProj);
       saveProjectsToStorage();
       openProject(newProj.id);
@@ -584,324 +581,414 @@
     function deleteProject(id) {
       projects = projects.filter(p => p.id !== id);
       saveProjectsToStorage();
-      renderHome();
+      renderProjectGrid();
+      showToast('作品を削除しました');
     }
 
     function openProject(id) {
-      currentProjId = id;
-      document.getElementById('view-home').style.display = 'none';
-      document.getElementById('view-editor').style.display = 'flex';
-      document.getElementById('btn-home').style.display = 'inline-block';
-      
-      loadProjectToForm();
-      renderPreview();
+      activeProject = projects.find(p => p.id === id);
+      if (!activeProject) return;
+
+      document.getElementById('view-home').classList.add('hidden');
+      document.getElementById('view-editor').classList.remove('hidden');
+      document.getElementById('btn-share').classList.remove('hidden');
+
+      syncFormFieldsFromState();
+      updateEditorUI();
     }
 
-    function getActiveProject() {
-      return projects.find(p => p.id === currentProjId);
+    // 入力フォームとモデル同期
+    function syncFormFieldsFromState() {
+      if (!activeProject) return;
+      document.getElementById('cfg-project-name').value = activeProject.name;
+      document.getElementById('cfg-target-words').value = activeProject.targetWords.join(', ');
+      document.getElementById('cfg-current-count').value = activeProject.count;
+      document.getElementById('cfg-target-goal').value = activeProject.goal;
+
+      document.getElementById('cfg-font-family').value = activeProject.fontFamily || 'font-mochiy';
+      document.getElementById('cfg-color-mode').value = activeProject.colorMode || 'solid';
+      document.getElementById('cfg-text-color').value = activeProject.textColor || '#ffffff';
+      document.getElementById('cfg-shadow-color').value = activeProject.shadowColor || '#000000';
+      document.getElementById('cfg-grad-color1').value = activeProject.gradColor1 || '#38bdf8';
+      document.getElementById('cfg-grad-color2').value = activeProject.gradColor2 || '#c084fc';
+      document.getElementById('cfg-grad-deg').value = activeProject.gradDeg || 90;
+
+      document.getElementById('cfg-pct-font').value = activeProject.meterPctFont || 'font-rounded';
+      document.getElementById('cfg-pct-size').value = activeProject.meterPctSize || 14;
+      document.getElementById('cfg-pct-color').value = activeProject.meterPctColor || '#e2e8f0';
+
+      document.getElementById('cfg-icon-text').value = activeProject.meterIcon ?? '🤌';
+      document.getElementById('cfg-icon-font').value = activeProject.meterIconFont || 'font-rounded';
+      document.getElementById('cfg-icon-color').value = activeProject.meterIconColor || '#fbbf24';
+
+      document.getElementById('cfg-card-bg').value = activeProject.cardBg || '#1e293b';
+      document.getElementById('cfg-border-color').value = activeProject.borderColor || '#64748b';
+      document.getElementById('cfg-border-width').value = activeProject.borderWidth ?? 4;
+      document.getElementById('cfg-border-radius').value = activeProject.borderRadius ?? 20;
+
+      toggleColorPanels();
+      renderPopEffectsList();
+      renderLayersList();
     }
 
-    function loadProjectToForm() {
-      const p = getActiveProject();
-      if (!p) return;
+    function updateCurrentProjectState() {
+      if (!activeProject) return;
 
-      document.getElementById('input-proj-name').value = p.name;
-      document.getElementById('input-keywords').value = p.keywords.join(',');
-      document.getElementById('input-count').value = p.count;
-      document.getElementById('input-target').value = p.target;
-      
-      document.getElementById('select-font').value = p.font;
-      document.getElementById('input-font-size').value = p.fontSize;
-      document.getElementById('select-text-color-type').value = p.textColorType;
-      document.getElementById('input-text-color').value = p.textColor;
-      document.getElementById('input-text-grad-1').value = p.textGrad1;
-      document.getElementById('input-text-grad-2').value = p.textGrad2;
-      document.getElementById('input-text-grad-deg').value = p.textGradDeg;
-      document.getElementById('input-bg-color').value = p.bgColor;
-      document.getElementById('input-border-color').value = p.borderColor;
+      activeProject.name = document.getElementById('cfg-project-name').value;
+      activeProject.targetWords = document.getElementById('cfg-target-words').value.split(',').map(s => s.trim()).filter(Boolean);
+      activeProject.count = parseInt(document.getElementById('cfg-current-count').value) || 0;
+      activeProject.goal = parseInt(document.getElementById('cfg-target-goal').value) || 100;
 
-      document.getElementById('input-meter-icon').value = p.meterIcon;
-      document.getElementById('select-meter-font').value = p.meterFont;
-      document.getElementById('input-meter-size').value = p.meterSize;
-      document.getElementById('input-meter-color').value = p.meterColor;
+      activeProject.fontFamily = document.getElementById('cfg-font-family').value;
+      activeProject.colorMode = document.getElementById('cfg-color-mode').value;
+      activeProject.textColor = document.getElementById('cfg-text-color').value;
+      activeProject.shadowColor = document.getElementById('cfg-shadow-color').value;
+      activeProject.gradColor1 = document.getElementById('cfg-grad-color1').value;
+      activeProject.gradColor2 = document.getElementById('cfg-grad-color2').value;
+      activeProject.gradDeg = parseInt(document.getElementById('cfg-grad-deg').value) || 90;
 
-      renderEffectsEditor();
-      renderLayersEditor();
-    }
+      activeProject.meterPctFont = document.getElementById('cfg-pct-font').value;
+      activeProject.meterPctSize = parseInt(document.getElementById('cfg-pct-size').value) || 14;
+      activeProject.meterPctColor = document.getElementById('cfg-pct-color').value;
 
-    function updateCurrentProjectData() {
-      const p = getActiveProject();
-      if (!p) return;
+      activeProject.meterIcon = document.getElementById('cfg-icon-text').value;
+      activeProject.meterIconFont = document.getElementById('cfg-icon-font').value;
+      activeProject.meterIconColor = document.getElementById('cfg-icon-color').value;
 
-      p.name = document.getElementById('input-proj-name').value;
-      p.keywords = document.getElementById('input-keywords').value.split(',').map(s => s.trim()).filter(Boolean);
-      p.count = parseInt(document.getElementById('input-count').value) || 0;
-      p.target = parseInt(document.getElementById('input-target').value) || 100;
-      
-      p.font = document.getElementById('select-font').value;
-      p.fontSize = parseInt(document.getElementById('input-font-size').value) || 64;
-      p.textColorType = document.getElementById('select-text-color-type').value;
-      p.textColor = document.getElementById('input-text-color').value;
-      p.textGrad1 = document.getElementById('input-text-grad-1').value;
-      p.textGrad2 = document.getElementById('input-text-grad-2').value;
-      p.textGradDeg = parseInt(document.getElementById('input-text-grad-deg').value) || 90;
-      p.bgColor = document.getElementById('input-bg-color').value;
-      p.borderColor = document.getElementById('input-border-color').value;
-
-      p.meterIcon = document.getElementById('input-meter-icon').value;
-      p.meterFont = document.getElementById('select-meter-font').value;
-      p.meterSize = parseInt(document.getElementById('input-meter-size').value) || 16;
-      p.meterColor = document.getElementById('input-meter-color').value;
-      p.updatedAt = Date.now();
-
-      document.getElementById('text-color-single-group').style.display = p.textColorType === 'single' ? 'flex' : 'none';
-      document.getElementById('text-color-grad-group').style.display = p.textColorType === 'gradient' ? 'flex' : 'none';
+      activeProject.cardBg = document.getElementById('cfg-card-bg').value;
+      activeProject.borderColor = document.getElementById('cfg-border-color').value;
+      activeProject.borderWidth = parseInt(document.getElementById('cfg-border-width').value) || 0;
+      activeProject.borderRadius = parseInt(document.getElementById('cfg-border-radius').value) || 0;
 
       saveProjectsToStorage();
-      renderPreview();
+      updateEditorUI();
     }
 
-    function renderPreview() {
-      const p = getActiveProject();
-      if (!p) return;
+    function toggleColorPanels() {
+      const isGrad = document.getElementById('cfg-color-mode').value === 'custom-grad';
+      document.getElementById('panel-solid-color').classList.toggle('hidden', isGrad);
+      document.getElementById('panel-custom-grad').classList.toggle('hidden', !isGrad);
+    }
 
-      const card = document.getElementById('counter-card');
-      card.style.backgroundColor = p.bgColor;
-      card.style.borderColor = p.borderColor;
+    // エディタ・プレビュー表示更新
+    function updateEditorUI() {
+      if (!activeProject) return;
 
-      const numEl = document.getElementById('count-number');
-      numEl.textContent = p.count.toLocaleString();
-      numEl.style.fontFamily = `'${p.font}', sans-serif`;
-      numEl.style.fontSize = p.fontSize + 'px';
+      document.getElementById('count-display').innerText = Number(activeProject.count).toLocaleString();
+      const pct = activeProject.goal > 0 ? Math.min(100, Math.max(0, (activeProject.count / activeProject.goal) * 100)) : 0;
+      document.getElementById('meter-bar').style.width = `${pct}%`;
+      document.getElementById('target-words-badge').innerText = activeProject.targetWords.join(', ') || 'なし';
 
-      if (p.textColorType === 'gradient') {
-        numEl.style.background = `linear-gradient(${p.textGradDeg}deg, ${p.textGrad1}, ${p.textGrad2})`;
-        numEl.style.webkitBackgroundClip = 'text';
-        numEl.style.webkitTextFillColor = 'transparent';
+      // メーターパーセンテージスタイリング
+      const pctEl = document.getElementById('meter-percent');
+      pctEl.innerText = `${pct.toFixed(1)}%`;
+      pctEl.className = `transition-all ${activeProject.meterPctFont || 'font-rounded'}`;
+      pctEl.style.fontSize = `${activeProject.meterPctSize || 14}px`;
+      pctEl.style.color = activeProject.meterPctColor || '#e2e8f0';
+
+      // メーターアイコンスタイリング
+      const iconEl = document.getElementById('meter-icon');
+      iconEl.innerText = activeProject.meterIcon || '';
+      iconEl.className = `transition-all ${activeProject.meterIconFont || 'font-rounded'}`;
+      iconEl.style.color = activeProject.meterIconColor || '#fbbf24';
+
+      // 数字テキストスタイル
+      const countDisp = document.getElementById('count-display');
+      countDisp.className = `font-extrabold text-6xl sm:text-7xl tracking-wider transition-all ${activeProject.fontFamily}`;
+
+      if (activeProject.colorMode === 'solid') {
+        countDisp.style.background = 'none';
+        countDisp.style.webkitBackgroundClip = 'initial';
+        countDisp.style.color = activeProject.textColor;
+        countDisp.style.textShadow = `2px 4px 8px ${activeProject.shadowColor}`;
       } else {
-        numEl.style.background = 'none';
-        numEl.style.webkitBackgroundClip = 'unset';
-        numEl.style.webkitTextFillColor = 'initial';
-        numEl.style.color = p.textColor;
+        countDisp.style.color = 'transparent';
+        countDisp.style.webkitBackgroundClip = 'text';
+        countDisp.style.textShadow = 'none';
+        countDisp.style.backgroundImage = `linear-gradient(${activeProject.gradDeg}deg, ${activeProject.gradColor1}, ${activeProject.gradColor2})`;
       }
 
-      const pct = Math.min(100, Math.max(0, (p.count / p.target) * 100)).toFixed(1);
-      document.getElementById('progress-fill').style.width = pct + '%';
-      
-      const pctEl = document.getElementById('meter-percent');
-      pctEl.textContent = pct + '%';
-      pctEl.style.fontFamily = `'${p.meterFont}', sans-serif`;
-      pctEl.style.fontSize = p.meterSize + 'px';
-      pctEl.style.color = p.meterColor;
+      // カードデザイン
+      const card = document.getElementById('overlay-card');
+      card.style.backgroundColor = activeProject.cardBg;
+      card.style.borderColor = activeProject.borderColor;
+      card.style.borderWidth = `${activeProject.borderWidth}px`;
+      card.style.borderRadius = `${activeProject.borderRadius}px`;
 
-      document.getElementById('meter-icon').textContent = p.meterIcon;
-
-      renderCustomLayersDOM();
+      renderCustomLayersCanvas();
     }
 
-    function renderCustomLayersDOM() {
-      const p = getActiveProject();
-      const card = document.getElementById('counter-card');
+    // ドラッグ配置用カスタムレイヤー描画
+    function renderCustomLayersCanvas() {
+      const container = document.getElementById('custom-layers-container');
+      container.innerHTML = '';
 
-      card.querySelectorAll('.custom-layer').forEach(el => el.remove());
+      if (!activeProject || !activeProject.layers) return;
 
-      p.layers.forEach((layer, idx) => {
+      activeProject.layers.forEach((layer) => {
         const div = document.createElement('div');
-        div.className = 'custom-layer';
-        div.style.left = layer.x + 'px';
-        div.style.top = layer.y + 'px';
+        div.className = 'draggable-layer absolute pointer-events-auto flex items-center justify-center';
+        div.style.left = `${layer.x}%`;
+        div.style.top = `${layer.y}%`;
+        div.style.opacity = `${(layer.opacity ?? 100) / 100}`;
+        div.style.transform = `rotate(${layer.rotate || 0}deg)`;
 
         if (layer.type === 'text') {
-          div.textContent = layer.content;
-          div.style.fontFamily = `'${layer.font || 'Noto Sans JP'}', sans-serif`;
-          div.style.fontSize = (layer.fontSize || 24) + 'px';
-          div.style.color = layer.color || '#ffffff';
+          div.className += ` ${layer.font || 'font-rounded'}`;
+          div.innerText = layer.content || '';
+          div.style.fontSize = `${layer.size || 24}px`;
+
+          if (layer.colorMode === 'grad') {
+            div.style.color = 'transparent';
+            div.style.webkitBackgroundClip = 'text';
+            div.style.backgroundImage = `linear-gradient(${layer.gradDeg || 90}deg, ${layer.grad1 || '#38bdf8'}, ${layer.grad2 || '#c084fc'})`;
+          } else {
+            div.style.color = layer.color || '#ffffff';
+          }
         } else if (layer.type === 'image') {
           const img = document.createElement('img');
           img.src = layer.content;
-          img.style.width = (layer.width || 80) + 'px';
-          img.style.pointerEvents = 'none';
+          img.style.width = `${layer.size || 60}px`;
+          img.className = 'h-auto rounded object-contain pointer-events-none';
+          img.onerror = () => { img.src = 'https://placehold.co/100x100/334155/e2e8f0?text=No+Image'; };
           div.appendChild(img);
         }
 
-        div.onmousedown = (e) => startDrag(e, idx);
-        card.appendChild(div);
+        makeElementDraggable(div, layer);
+        container.appendChild(div);
       });
     }
 
-    function startDrag(e, index) {
-      const p = getActiveProject();
-      const layer = p.layers[index];
-      const startX = e.clientX - layer.x;
-      const startY = e.clientY - layer.y;
+    // レイヤーのドラッグ＆ドロップ移動処理
+    function makeElementDraggable(elmnt, layerData) {
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      elmnt.onmousedown = dragMouseDown;
+      elmnt.ontouchstart = dragMouseDown;
 
-      function onMouseMove(e) {
-        layer.x = e.clientX - startX;
-        layer.y = e.clientY - startY;
-        renderCustomLayersDOM();
+      function dragMouseDown(e) {
+        e.preventDefault();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+
+        document.onmouseup = closeDragElement;
+        document.ontouchend = closeDragElement;
+        document.onmousemove = elementDrag;
+        document.ontouchmove = elementDrag;
       }
 
-      function onMouseUp() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+      function elementDrag(e) {
+        e.preventDefault();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        pos1 = pos3 - clientX;
+        pos2 = pos4 - clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+
+        const container = document.getElementById('overlay-card');
+        const rect = container.getBoundingClientRect();
+
+        let newXPx = elmnt.offsetLeft - pos1;
+        let newYPx = elmnt.offsetTop - pos2;
+
+        let newX = (newXPx / rect.width) * 100;
+        let newY = (newYPx / rect.height) * 100;
+
+        layerData.x = Math.round(newX * 10) / 10;
+        layerData.y = Math.round(newY * 10) / 10;
+
+        elmnt.style.left = `${layerData.x}%`;
+        elmnt.style.top = `${layerData.y}%`;
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.ontouchend = null;
+        document.onmousemove = null;
+        document.ontouchmove = null;
         saveProjectsToStorage();
       }
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
     }
 
-    function renderEffectsEditor() {
-      const p = getActiveProject();
-      const container = document.getElementById('effects-list-editor');
+    // 上昇エフェクト一覧リスト描画
+    function renderPopEffectsList() {
+      const container = document.getElementById('pop-effects-list');
       container.innerHTML = '';
 
-      p.effects.forEach((eff, idx) => {
-        const row = document.createElement('div');
-        row.className = 'form-row';
-
-        const textInput = document.createElement('input');
-        textInput.type = 'text';
-        textInput.value = eff.text;
-        textInput.style.flex = '1';
-        textInput.oninput = (e) => {
-          eff.text = e.target.value;
-          saveProjectsToStorage();
-        };
-
-        const colorInput = document.createElement('input');
-        colorInput.type = 'color';
-        colorInput.value = eff.color;
-        colorInput.onchange = (e) => {
-          eff.color = e.target.value;
-          saveProjectsToStorage();
-        };
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn-danger';
-        delBtn.textContent = '削除';
-        delBtn.onclick = () => {
-          p.effects.splice(idx, 1);
-          saveProjectsToStorage();
-          renderEffectsEditor();
-        };
-
-        row.appendChild(textInput);
-        row.appendChild(colorInput);
-        row.appendChild(delBtn);
-        container.appendChild(row);
+      activeProject.popEffects.forEach((eff, idx) => {
+        const item = document.createElement('div');
+        item.className = "flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 text-xs";
+        item.innerHTML = `
+          <input type="text" value="${escapeHtml(eff.text)}" oninput="activeProject.popEffects[${idx}].text=this.value; saveProjectsToStorage();" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white">
+          <input type="color" value="${eff.color}" oninput="activeProject.popEffects[${idx}].color=this.value; saveProjectsToStorage();" class="w-7 h-7 bg-transparent cursor-pointer rounded p-0.5">
+          <button onclick="activeProject.popEffects.splice(${idx},1); saveProjectsToStorage(); renderPopEffectsList();" class="text-slate-500 hover:text-red-400 p-1">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        `;
+        container.appendChild(item);
       });
     }
 
-    function addEffectPreset() {
-      const p = getActiveProject();
-      p.effects.push({ text: 'Nice!', color: '#3b82f6', font: 'Mochiy Pop One' });
+    function addPopEffect() {
+      activeProject.popEffects.push({ id: 'p_' + Date.now(), text: '+1 Nice!', color: '#3b82f6', font: 'font-mochiy' });
       saveProjectsToStorage();
-      renderEffectsEditor();
+      renderPopEffectsList();
     }
 
-    function renderLayersEditor() {
-      const p = getActiveProject();
-      const container = document.getElementById('layers-list-editor');
+    // カスタムレイヤー設定一覧描画 (フォーカス外れバグ修正済み)
+    function renderLayersList() {
+      const container = document.getElementById('layers-list');
       container.innerHTML = '';
 
-      p.layers.forEach((layer, idx) => {
-        const box = document.createElement('div');
-        box.style.border = '1px solid #e5e7eb';
-        box.style.padding = '10px';
-        box.style.borderRadius = '8px';
-        box.style.display = 'flex';
-        box.style.flexDirection = 'column';
-        box.style.gap = '8px';
+      activeProject.layers.forEach((layer, idx) => {
+        const item = document.createElement('div');
+        item.className = "bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs";
 
-        const head = document.createElement('div');
-        head.style.display = 'flex';
-        head.style.justifyContent = 'space-between';
-        head.innerHTML = `<strong>レイヤー ${idx + 1} (${layer.type})</strong>`;
+        let typeSpecificUI = '';
+        if (layer.type === 'text') {
+          typeSpecificUI = `
+            <div>
+              <label class="text-[10px] text-slate-400">表示テキスト</label>
+              <input type="text" value="${escapeHtml(layer.content)}" oninput="activeProject.layers[${idx}].content=this.value; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-400">フォント</label>
+                <select onchange="activeProject.layers[${idx}].font=this.value; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-white">
+                  ${FONT_OPTIONS.map(f => `<option value="${f.class}" ${layer.font===f.class?'selected':''}>${f.name}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-400">カラーモード</label>
+                <select onchange="activeProject.layers[${idx}].colorMode=this.value; saveProjectsToStorage(); renderLayersList(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-white">
+                  <option value="solid" ${layer.colorMode!=='grad'?'selected':''}>単色</option>
+                  <option value="grad" ${layer.colorMode==='grad'?'selected':''}>グラデーション</option>
+                </select>
+              </div>
+            </div>
+            ${layer.colorMode === 'grad' ? `
+              <div class="grid grid-cols-3 gap-1.5">
+                <div>
+                  <label class="text-[9px] text-slate-400">開始色</label>
+                  <input type="color" value="${layer.grad1||'#38bdf8'}" oninput="activeProject.layers[${idx}].grad1=this.value; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full h-6 bg-transparent cursor-pointer rounded">
+                </div>
+                <div>
+                  <label class="text-[9px] text-slate-400">終了色</label>
+                  <input type="color" value="${layer.grad2||'#c084fc'}" oninput="activeProject.layers[${idx}].grad2=this.value; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full h-6 bg-transparent cursor-pointer rounded">
+                </div>
+                <div>
+                  <label class="text-[9px] text-slate-400">角度</label>
+                  <input type="number" value="${layer.gradDeg||90}" oninput="activeProject.layers[${idx}].gradDeg=parseInt(this.value)||0; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-white">
+                </div>
+              </div>
+            ` : `
+              <div>
+                <label class="text-[10px] text-slate-400">文字色</label>
+                <input type="color" value="${layer.color||'#ffffff'}" oninput="activeProject.layers[${idx}].color=this.value; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full h-6 bg-transparent cursor-pointer rounded">
+              </div>
+            `}
+          `;
+        } else {
+          typeSpecificUI = `
+            <div>
+              <label class="text-[10px] text-slate-400">画像URL</label>
+              <input type="text" value="${escapeHtml(layer.content)}" oninput="activeProject.layers[${idx}].content=this.value; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" placeholder="https://...">
+            </div>
+          `;
+        }
 
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn-danger';
-        delBtn.textContent = '削除';
-        delBtn.style.padding = '2px 8px';
-        delBtn.onclick = () => {
-          p.layers.splice(idx, 1);
-          saveProjectsToStorage();
-          renderLayersEditor();
-          renderPreview();
-        };
-        head.appendChild(delBtn);
-
-        const contentInput = document.createElement('input');
-        contentInput.type = 'text';
-        contentInput.value = layer.content;
-        contentInput.placeholder = layer.type === 'text' ? '表示文字' : '画像URL';
-        contentInput.oninput = (e) => {
-          layer.content = e.target.value;
-          saveProjectsToStorage();
-          renderCustomLayersDOM();
-        };
-
-        box.appendChild(head);
-        box.appendChild(contentInput);
-        container.appendChild(box);
+        item.innerHTML = `
+          <div class="flex justify-between items-center border-b border-slate-800 pb-1">
+            <span class="font-bold text-pink-400">${layer.type === 'text' ? 'テキストレイヤー' : '画像レイヤー'}</span>
+            <button onclick="activeProject.layers.splice(${idx},1); saveProjectsToStorage(); renderLayersList(); renderCustomLayersCanvas();" class="text-slate-500 hover:text-red-400">
+              <i class="fa-solid fa-trash"></i> 削除
+            </button>
+          </div>
+          ${typeSpecificUI}
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400">サイズ (px)</label>
+              <input type="number" value="${layer.size||30}" oninput="activeProject.layers[${idx}].size=parseInt(this.value)||10; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-white">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400">回転角度 (°)</label>
+              <input type="number" value="${layer.rotate||0}" oninput="activeProject.layers[${idx}].rotate=parseInt(this.value)||0; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-white">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400">不透明度 (%)</label>
+              <input type="number" min="0" max="100" value="${layer.opacity??100}" oninput="activeProject.layers[${idx}].opacity=parseInt(this.value)||100; saveProjectsToStorage(); renderCustomLayersCanvas();" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-white">
+            </div>
+          </div>
+        `;
+        container.appendChild(item);
       });
     }
 
     function addCustomLayer(type) {
-      const p = getActiveProject();
+      if (!activeProject) return;
       if (type === 'text') {
-        p.layers.push({ type: 'text', content: 'テキスト', x: 20, y: 20, fontSize: 24, color: '#ffffff', font: 'Noto Sans JP' });
+        activeProject.layers.push({ id: 'l_' + Date.now(), type: 'text', content: '新テキスト', x: 20, y: 20, size: 32, font: 'font-mochiy', colorMode: 'solid', color: '#ffffff', rotate: 0, opacity: 100 });
       } else {
-        p.layers.push({ type: 'image', content: 'https://via.placeholder.com/50', x: 50, y: 50, width: 60 });
+        activeProject.layers.push({ id: 'l_' + Date.now(), type: 'image', content: 'https://placehold.co/100x100/38bdf8/ffffff?text=Icon', x: 70, y: 20, size: 60, rotate: 0, opacity: 100 });
       }
       saveProjectsToStorage();
-      renderLayersEditor();
-      renderPreview();
+      renderLayersList();
+      renderCustomLayersCanvas();
     }
 
+    // 音声認識エンジン (言った瞬間に即座に+1カウント)
     function setupSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert('お使いのブラウザは音声認識に対応していません。(Chrome推奨)');
+        alert('お使いのブラウザは音声認識に対応していません。(Chromeを推奨します)');
         return;
       }
 
       recognition = new SpeechRecognition();
       recognition.continuous = true;
-      recognition.interimResults = false;
+      recognition.interimResults = true; // 即時検出のためにtrue設定
       recognition.lang = 'ja-JP';
 
       recognition.onresult = (event) => {
-        const p = getActiveProject();
-        if (!p) return;
+        if (!activeProject || !isListening) return;
 
         const now = Date.now();
-        // 500ms以内の連続反応（重複発火）をブロック
-        if (now - lastRecognizedTime < 500) return;
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            const transcript = event.results[i][0].transcript.trim();
-            
-            let matched = false;
-            p.keywords.forEach(kw => {
-              if (kw && transcript.includes(kw) && !matched) {
-                matched = true;
-                lastRecognizedTime = now;
-                p.count += 1;
-                document.getElementById('input-count').value = p.count;
-                saveProjectsToStorage();
-                renderPreview();
-                triggerEffect();
-                logSpeech(`${transcript} (検知: ${kw})`);
-              }
-            });
+          const transcript = event.results[i][0].transcript.trim();
+
+          // 直近と同じ単語かつ短時間での重複発火を防止
+          if (transcript === lastRecognizedText && (now - lastRecognizedTime < 1200)) {
+            continue;
+          }
+
+          let matchedWord = null;
+          activeProject.targetWords.forEach(kw => {
+            if (kw && transcript.includes(kw)) {
+              matchedWord = kw;
+            }
+          });
+
+          if (matchedWord) {
+            lastRecognizedText = transcript;
+            lastRecognizedTime = now;
+
+            // 即時+1増加
+            activeProject.count += 1;
+            document.getElementById('cfg-current-count').value = activeProject.count;
+            saveProjectsToStorage();
+            updateEditorUI();
+            triggerPopEffect();
+            addSpeechLog(transcript, matchedWord);
+            break;
           }
         }
       };
 
       recognition.onend = () => {
-        if (isListening) recognition.start();
+        if (isListening) recognition.start(); // 自動再開
       };
     }
 
@@ -914,9 +1001,14 @@
       if (!recognition) return;
       isListening = true;
       recognition.start();
-      document.getElementById('rec-dot').classList.add('active');
-      document.getElementById('btn-toggle-mic').textContent = '⏸ 停止 (配信中)';
-      document.getElementById('btn-toggle-mic').classList.replace('btn-primary', 'btn-danger');
+
+      document.getElementById('mic-btn-text').innerText = '⏸ 停止 (配信中)';
+      document.getElementById('btn-toggle-mic').classList.replace('bg-emerald-600', 'bg-red-600');
+      document.getElementById('btn-toggle-mic').classList.replace('hover:bg-emerald-500', 'hover:bg-red-500');
+      document.getElementById('mic-indicator-dot').className = "w-3 h-3 rounded-full bg-red-500 recording-dot inline-block";
+      document.getElementById('transcript-display').innerText = "音声認識中...";
+
+      // 配信（ライブ）モード適用
       document.body.classList.add('live-mode');
     }
 
@@ -924,44 +1016,87 @@
       if (!recognition) return;
       isListening = false;
       recognition.stop();
-      document.getElementById('rec-dot').classList.remove('active');
-      document.getElementById('btn-toggle-mic').textContent = '▶ 開始 (マイクON)';
-      document.getElementById('btn-toggle-mic').classList.replace('btn-danger', 'btn-primary');
+
+      document.getElementById('mic-btn-text').innerText = '▶ 開始 (マイクON)';
+      document.getElementById('btn-toggle-mic').classList.replace('bg-red-600', 'bg-emerald-600');
+      document.getElementById('btn-toggle-mic').classList.replace('hover:bg-red-500', 'hover:bg-emerald-500');
+      document.getElementById('mic-indicator-dot').className = "w-3 h-3 rounded-full bg-gray-500 inline-block";
+      document.getElementById('transcript-display').innerText = "マイクは停止中";
+
       document.body.classList.remove('live-mode');
     }
 
-    function logSpeech(text) {
+    function addSpeechLog(text, matched) {
       const list = document.getElementById('speech-log-list');
+      const time = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
       const item = document.createElement('div');
-      item.className = 'speech-log-item';
-      item.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+      item.innerHTML = `<span class="text-slate-500">[${time}]</span> "${escapeHtml(text)}" <span class="text-emerald-400 font-bold">(検知: ${escapeHtml(matched)} +1)</span>`;
       list.insertBefore(item, list.firstChild);
     }
 
-    function triggerEffect() {
-      const p = getActiveProject();
-      if (!p || !p.effects || p.effects.length === 0) return;
+    // カウント上昇ポップアップ発火
+    function triggerPopEffect() {
+      if (!activeProject || !activeProject.popEffects || activeProject.popEffects.length === 0) return;
 
-      const eff = p.effects[Math.floor(Math.random() * p.effects.length)];
-      const container = document.getElementById('effects-container');
+      const eff = activeProject.popEffects[Math.floor(Math.random() * activeProject.popEffects.length)];
+      const container = document.getElementById('popup-container');
 
       const el = document.createElement('div');
-      el.className = 'popup-effect';
-      el.textContent = eff.text;
+      el.className = `pop-effect text-3xl font-extrabold ${eff.font || 'font-mochiy'}`;
+      el.innerText = eff.text;
       el.style.color = eff.color;
-      el.style.fontFamily = `'${eff.font || 'Mochiy Pop One'}', sans-serif`;
-      el.style.fontSize = '32px';
+      el.style.textShadow = '0 2px 10px rgba(0,0,0,0.8)';
 
       container.appendChild(el);
-      setTimeout(() => el.remove(), 800);
+      setTimeout(() => el.remove(), 850);
     }
 
-    function switchTab(tabId, evt) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    // 手動操作
+    function adjustCount(val) {
+      if (!activeProject) return;
+      activeProject.count = Math.max(0, activeProject.count + val);
+      document.getElementById('cfg-current-count').value = activeProject.count;
+      saveProjectsToStorage();
+      updateEditorUI();
+      if (val > 0) triggerPopEffect();
+    }
 
-      evt.target.classList.add('active');
-      document.getElementById(tabId).classList.add('active');
+    function resetCount() {
+      if (!activeProject) return;
+      activeProject.count = 0;
+      document.getElementById('cfg-current-count').value = 0;
+      saveProjectsToStorage();
+      updateEditorUI();
+    }
+
+    // 共有リンク生成
+    function copyShareUrl() {
+      if (!activeProject) return;
+      const jsonStr = JSON.stringify(activeProject);
+      const b64 = btoa(encodeURIComponent(jsonStr));
+      const shareUrl = `${window.location.origin}${window.location.pathname}#data=${b64}`;
+
+      const dummy = document.createElement('textarea');
+      document.body.appendChild(dummy);
+      dummy.value = shareUrl;
+      dummy.select();
+      document.execCommand('copy');
+      document.body.removeChild(dummy);
+
+      showToast('共有URLをクリップボードにコピーしました！');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
   </script>
 </body>
